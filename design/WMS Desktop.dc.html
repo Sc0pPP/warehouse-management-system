@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="stylesheet" href="ds/styles.css"><style>
+body{margin:0;background:#e4e4e6;font-family:"Barlow",system-ui,sans-serif}
+a{color:#416180;text-decoration:none}a:hover{color:#2c455d}
+.dv-turn{padding:36px 40px 30px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 18px}
+.dv-tid{font:600 10px/1 "Barlow Condensed",sans-serif;letter-spacing:.1em;padding:4px 7px;background:#1d1f20;color:#f2f2f3}
+.dv-tname{font:600 13px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#1d1f20}
+.dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px/1 "Barlow Condensed",sans-serif;letter-spacing:.1em;padding:4px 7px;background:rgba(29,31,32,.1);color:#1d1f20}
+.dv-olabel{display:flex;align-items:baseline;gap:9px;font:400 11.5px/1.3 "Barlow",sans-serif;color:rgba(29,31,32,.6)}
+.dv-opt:target .dv-oid{background:#5980a6;color:#f2f2f3}
+.dv-next{margin:22px 0 0;font:400 12px/1.6 "Barlow",sans-serif;color:rgba(29,31,32,.55)}
+.wms-row:hover{background:rgba(29,31,32,.045)}
+.wms-nav:hover{background:rgba(89,128,166,.12)}
+</style></helmet>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">WMS · десктоп · Industry</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Кликабельный прототип — чертёжный стиль системы, 9 разделов</div>
+<div class="blueprint" style="width:1440px;height:900px;background:var(--color-bg);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+
+<div style="height:52px;flex:none;display:flex;align-items:center;gap:20px;padding:0 18px;border-bottom:1px solid var(--color-divider)">
+<div style="display:flex;gap:7px;align-items:center">
+<div style="width:10px;height:10px;border:1px solid var(--color-divider)"></div>
+<div style="width:10px;height:10px;border:1px solid var(--color-divider)"></div>
+<div style="width:10px;height:10px;border:1px solid var(--color-divider)"></div>
+</div>
+<div style="font:600 17px/1 var(--font-heading);letter-spacing:.06em">СКЛАД · WMS</div>
+<div style="font:400 12px/1 var(--font-body);letter-spacing:.06em;color:rgba(29,31,32,.55);padding-left:14px;border-left:1px solid var(--color-divider)">СКЛАД №1 · ДОМОДЕДОВО</div>
+<div style="flex:1;display:flex;justify-content:center">
+<label class="input" style="width:460px;min-height:32px;display:flex;align-items:center;gap:9px;background:transparent">
+<div style="width:11px;height:11px;border:1.5px solid rgba(29,31,32,.45);border-radius:50%"></div>
+<div style="flex:1;font-size:13.5px;color:rgba(29,31,32,.45)">Поиск по SKU, номенклатуре, ячейке, документу…</div>
+<div style="font:400 11px/1 var(--font-body);letter-spacing:.08em;color:rgba(29,31,32,.4);border:1px solid var(--color-divider);padding:2px 5px">CTRL K</div>
+</label>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<div style="position:relative;width:32px;height:32px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center">
+<div style="width:11px;height:9px;border:1.5px solid rgba(29,31,32,.55)"></div>
+<div style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--color-accent)"></div>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding-left:14px;border-left:1px solid var(--color-divider)">
+<div style="width:30px;height:30px;border:1px solid var(--color-accent);color:var(--color-accent-700);font:600 12px/30px var(--font-heading);text-align:center;letter-spacing:.06em">АК</div>
+<div>
+<div style="font:500 12.5px/1.2 var(--font-body)">А. Ковалёв</div>
+<div style="font:400 10.5px/1.3 var(--font-body);color:rgba(29,31,32,.5)">Менеджер склада</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<div style="width:236px;flex:none;border-right:1px solid var(--color-divider);display:flex;flex-direction:column;padding:16px 12px 12px">
+<sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+<div style="margin-bottom:14px">
+<div style="padding:0 8px 8px;font:600 10px/1 var(--font-heading);letter-spacing:.16em;color:rgba(29,31,32,.45)">{{ g.title }}</div>
+<sc-for list="{{ g.items }}" as="n" hint-placeholder-count="3">
+<div class="wms-nav" onClick="{{ n.go }}" style="display:flex;align-items:center;gap:10px;padding:8px 8px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }};border-left:2px solid {{ n.mark }}">
+<div style="flex:1;font-size:13.5px;font-weight:{{ n.fw }}">{{ n.label }}</div>
+<div style="font:500 11.5px/1 var(--font-body);letter-spacing:.04em;color:{{ n.cfg }}">{{ n.count }}</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+<div style="margin-top:auto;border-top:1px solid var(--color-divider);padding:12px 8px 2px">
+<div style="font:400 11px/1.4 var(--font-body);color:rgba(29,31,32,.55)">Синхронизация ТСД</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+<div style="width:7px;height:7px;background:var(--color-accent)"></div>
+<div style="font:500 11.5px/1 var(--font-body);letter-spacing:.04em">12 устройств на линии</div>
+</div>
+<div style="height:4px;margin-top:9px;background:var(--color-neutral-200)"><div style="width:72%;height:100%;background:var(--color-accent-400)"></div></div>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+<div style="flex:none;padding:20px 24px 16px;display:flex;align-items:flex-end;gap:18px;border-bottom:1px solid var(--color-divider)">
+<div>
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.16em;color:var(--color-accent-700)">{{ view.kicker }}</div>
+<h3 style="margin:7px 0 0;font-size:26px;white-space:nowrap">{{ view.title }}</h3>
+<div style="font-size:12.5px;color:rgba(29,31,32,.55);margin-top:4px">{{ view.subtitle }}</div>
+</div>
+<div style="margin-left:auto;flex:none;display:flex;gap:8px">
+<button class="btn btn-secondary" style="min-height:34px;white-space:nowrap">{{ view.action2 }}</button>
+<button class="btn btn-primary blueprint" style="min-height:34px;white-space:nowrap;background:var(--color-accent);color:var(--color-bg)">{{ view.action1 }}<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i></button>
+</div>
+</div>
+
+<div style="flex:1;min-height:0;display:flex">
+<div style="flex:1;min-width:0;overflow:auto;padding:20px 24px 24px">
+
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px">
+<sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+<div class="card blueprint" style="padding:14px 16px 13px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(29,31,32,.55)">{{ k.label }}</div>
+<div style="display:flex;align-items:baseline;gap:9px;margin-top:11px">
+<div style="font:600 30px/1 var(--font-heading);letter-spacing:-.01em">{{ k.value }}</div>
+<div style="font-size:12px;color:{{ k.tone }}">{{ k.delta }}</div>
+</div>
+<div style="display:flex;align-items:flex-end;gap:2px;height:28px;margin-top:14px">
+<sc-for list="{{ k.spark }}" as="h" hint-placeholder-count="14">
+<div style="flex:1;height:{{ h }};background:var(--color-accent-300)"></div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px">
+<div class="card blueprint" style="padding:16px 18px 14px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="display:flex;align-items:baseline;gap:14px">
+<h5 style="margin:0">Приёмка и отгрузка · 14 дней</h5>
+<div style="margin-left:auto;display:flex;gap:14px;font-size:11.5px;color:rgba(29,31,32,.6)">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;background:var(--color-accent)"></div>приёмка</div>
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;background:var(--color-accent-300)"></div>отгрузка</div>
+</div>
+</div>
+<div style="display:flex;align-items:flex-end;gap:9px;height:182px;margin-top:18px;border-bottom:1px solid var(--color-divider);padding-bottom:7px">
+<sc-for list="{{ chart }}" as="d" hint-placeholder-count="14">
+<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px">
+<div style="width:100%;flex:1;display:flex;gap:3px;align-items:flex-end">
+<div style="flex:1;height:{{ d.a }};background:var(--color-accent)"></div>
+<div style="flex:1;height:{{ d.b }};background:var(--color-accent-300)"></div>
+</div>
+<div style="font-size:10px;letter-spacing:.04em;color:rgba(29,31,32,.5)">{{ d.label }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="card blueprint" style="padding:16px 18px 14px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<h5 style="margin:0">Требует внимания</h5>
+<div style="margin-top:10px">
+<sc-for list="{{ alerts }}" as="a" hint-placeholder-count="5">
+<div class="wms-row" onClick="{{ a.go }}" style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-top:1px solid rgba(29,31,32,.08);cursor:pointer">
+<div style="width:3px;height:28px;background:{{ a.tone }}"></div>
+<div style="flex:1;min-width:0">
+<div style="font-size:13px;font-weight:500">{{ a.title }}</div>
+<div style="font-size:11px;color:rgba(29,31,32,.55);margin-top:2px">{{ a.meta }}</div>
+</div>
+<div style="font:500 13px/1 var(--font-body);letter-spacing:.04em">{{ a.value }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div class="card blueprint" style="padding:16px 18px 18px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="display:flex;align-items:baseline">
+<h5 style="margin:0">Загрузка зон хранения</h5>
+<div style="margin-left:auto;font-size:11.5px;color:rgba(29,31,32,.55)">занято ячеек / всего</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px;margin-top:16px">
+<sc-for list="{{ zones }}" as="z" hint-placeholder-count="6">
+<div>
+<div style="display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:500">{{ z.name }}</span><span style="color:rgba(29,31,32,.55);letter-spacing:.04em">{{ z.cells }}</span></div>
+<div style="height:7px;margin-top:8px;background:var(--color-neutral-200)"><div style="height:100%;width:{{ z.pct }};background:{{ z.fill }}"></div></div>
+<div style="margin-top:6px;font:600 11px/1 var(--font-heading);letter-spacing:.1em;color:rgba(29,31,32,.5)">{{ z.pct }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+<div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<sc-for list="{{ view.filters }}" as="f" hint-placeholder-count="4">
+<div style="padding:6px 12px;border:1px solid {{ f.bd }};background:{{ f.bg }};color:{{ f.fg }};font-size:12.5px;white-space:nowrap;cursor:pointer">{{ f.label }}</div>
+</sc-for>
+<div style="margin-left:auto;display:flex;align-items:center;gap:16px;font-size:12px;color:rgba(29,31,32,.55)">
+<span>{{ view.count }}</span>
+<span style="display:flex;align-items:center;gap:7px"><span style="width:10px;height:10px;border:1px solid var(--color-divider)"></span>Колонки</span>
+</div>
+</div>
+
+<div class="blueprint" style="padding:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="display:grid;grid-template-columns:{{ view.grid }};padding:0 14px;border-bottom:1px solid var(--color-divider)">
+<sc-for list="{{ view.columns }}" as="col" hint-placeholder-count="6">
+<div style="padding:10px 8px;font:400 10.5px/1 var(--font-body);letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.6);text-align:{{ col.align }}">{{ col.t }}</div>
+</sc-for>
+</div>
+<sc-for list="{{ view.rows }}" as="r" hint-placeholder-count="9">
+<div class="wms-row" onClick="{{ r.go }}" style="display:grid;grid-template-columns:{{ view.grid }};padding:0 14px;border-bottom:1px solid rgba(29,31,32,.07);cursor:pointer;background:{{ r.bg }}">
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="6">
+<div style="padding:11px 8px;min-height:42px;display:flex;align-items:center;justify-content:{{ c.just }}">
+<sc-if value="{{ c.isTag }}" hint-placeholder-val="{{ false }}">
+<span class="tag {{ c.tag }}" style="white-space:nowrap">{{ c.text }}</span>
+</sc-if>
+<sc-if value="{{ c.isText }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:13.5px;font-weight:{{ c.fw }};letter-spacing:{{ c.ls }};color:{{ c.color }}">{{ c.text }}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:18px;margin-top:14px;font-size:12px;color:rgba(29,31,32,.55)">
+<div style="display:flex;gap:6px">
+<div style="width:28px;height:28px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center">‹</div>
+<div style="width:28px;height:28px;border:1px solid var(--color-accent);background:var(--color-accent);color:var(--color-bg);display:flex;align-items:center;justify-content:center">1</div>
+<div style="width:28px;height:28px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center">2</div>
+<div style="width:28px;height:28px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center">3</div>
+<div style="width:28px;height:28px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center">›</div>
+</div>
+<div style="margin-left:auto">{{ view.footnote }}</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:20px">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+<sc-for list="{{ repKpis }}" as="k" hint-placeholder-count="3">
+<div class="card blueprint" style="padding:15px 17px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(29,31,32,.55)">{{ k.label }}</div>
+<div style="font:600 30px/1 var(--font-heading);margin-top:11px">{{ k.value }}</div>
+<div style="font-size:12px;color:rgba(29,31,32,.55);margin-top:6px">{{ k.note }}</div>
+</div>
+</sc-for>
+</div>
+<div class="card blueprint" style="padding:16px 18px 14px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<h5 style="margin:0">Оборачиваемость запаса по месяцам, дней</h5>
+<div style="display:flex;align-items:flex-end;gap:12px;height:200px;margin-top:18px;border-bottom:1px solid var(--color-divider);padding-bottom:7px">
+<sc-for list="{{ repBars }}" as="b" hint-placeholder-count="12">
+<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px">
+<div style="font-size:11px;letter-spacing:.04em;color:rgba(29,31,32,.6)">{{ b.value }}</div>
+<div style="width:100%;height:{{ b.h }};background:{{ b.fill }}"></div>
+<div style="font-size:10.5px;letter-spacing:.06em;color:rgba(29,31,32,.5)">{{ b.label }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px">
+<div class="card blueprint" style="padding:16px 18px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<h5 style="margin:0">Топ позиций по отгрузке</h5>
+<div style="margin-top:12px">
+<sc-for list="{{ repTop }}" as="t" hint-placeholder-count="6">
+<div style="padding:9px 0;border-top:1px solid rgba(29,31,32,.08)">
+<div style="display:flex;gap:10px;font-size:13px"><span style="color:rgba(29,31,32,.45);letter-spacing:.06em">{{ t.n }}</span><span style="flex:1">{{ t.name }}</span><span style="font-weight:500;letter-spacing:.04em">{{ t.qty }}</span></div>
+<div style="height:5px;margin-top:7px;background:var(--color-neutral-200)"><div style="height:100%;width:{{ t.pct }};background:var(--color-accent-400)"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="card blueprint" style="padding:16px 18px;gap:0">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<h5 style="margin:0">Структура запаса по группам</h5>
+<div style="margin-top:12px">
+<sc-for list="{{ repMix }}" as="m" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(29,31,32,.08)">
+<div style="width:10px;height:10px;background:{{ m.fill }}"></div>
+<div style="flex:1;font-size:13px">{{ m.name }}</div>
+<div style="width:150px;height:5px;background:var(--color-neutral-200)"><div style="height:100%;width:{{ m.pct }};background:{{ m.fill }}"></div></div>
+<div style="width:52px;text-align:right;font-size:12.5px;letter-spacing:.04em;color:rgba(29,31,32,.7)">{{ m.pct }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ hasDrawer }}" hint-placeholder-val="{{ false }}">
+<div style="width:352px;flex:none;border-left:1px solid var(--color-divider);padding:20px 22px;overflow:auto;background:var(--color-neutral-100)">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div>
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:var(--color-accent-700)">{{ drawer.sku }}</div>
+<h4 style="margin:8px 0 0;font-size:21px">{{ drawer.name }}</h4>
+</div>
+<div onClick="{{ closeDrawer }}" style="margin-left:auto;width:26px;height:26px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:rgba(29,31,32,.6)">×</div>
+</div>
+<div class="duotone blueprint" style="height:132px;margin-top:18px;background:repeating-linear-gradient(135deg,var(--color-neutral-200) 0 7px,var(--color-neutral-100) 7px 14px);display:flex;align-items:center;justify-content:center">
+<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+<div style="font:400 11px/1 var(--font-body);letter-spacing:.14em;color:rgba(29,31,32,.5);text-transform:uppercase">фото товара</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:18px;background:var(--color-divider)">
+<sc-for list="{{ drawer.stats }}" as="s" hint-placeholder-count="4">
+<div style="background:var(--color-neutral-100);padding:11px 12px">
+<div style="font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.55)">{{ s.k }}</div>
+<div style="font:600 19px/1 var(--font-heading);margin-top:6px">{{ s.v }}</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:20px;font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(29,31,32,.55)">РАЗМЕЩЕНИЕ</div>
+<sc-for list="{{ drawer.places }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(29,31,32,.08)">
+<div style="font-size:13px;font-weight:500;letter-spacing:.06em;width:86px">{{ p.cell }}</div>
+<div style="flex:1;font-size:12px;color:rgba(29,31,32,.55)">{{ p.batch }}</div>
+<div style="font-size:13px;letter-spacing:.04em">{{ p.qty }}</div>
+</div>
+</sc-for>
+<div style="display:flex;gap:8px;margin-top:20px">
+<button class="btn btn-primary" style="flex:1;height:34px">Переместить</button>
+<button class="btn btn-secondary" style="flex:1;height:34px">История</button>
+</div>
+</div>
+</sc-if>
+</div>
+
+<div style="flex:none;height:30px;border-top:1px solid var(--color-divider);display:flex;align-items:center;gap:20px;padding:0 18px;font-size:11px;letter-spacing:.04em;color:rgba(29,31,32,.55)">
+<span>Смена 07:00–19:00</span><span>Оператор: А. Ковалёв</span><span>Последняя синхронизация 12:41</span>
+<span style="margin-left:auto;display:flex;align-items:center;gap:7px"><span style="width:7px;height:7px;background:var(--color-accent)"></span>1С: обмен активен</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Вариант стиля: стальное поле — тёмная панель данных, инверсия типографики</div>
+<div class="blueprint" style="width:700px;background:var(--color-accent-900);color:#e9edf1;padding:22px 24px 24px;box-shadow:var(--shadow-md)">
+<i class="corner tl" style="color:rgba(233,237,241,.6)"></i><i class="corner tr" style="color:rgba(233,237,241,.6)"></i><i class="corner bl" style="color:rgba(233,237,241,.6)"></i><i class="corner br" style="color:rgba(233,237,241,.6)"></i>
+<div style="display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid rgba(233,237,241,.22);padding-bottom:16px">
+<div>
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.16em;color:var(--color-accent-300)">ОБЗОР СМЕНЫ</div>
+<h3 style="margin:8px 0 0;font-size:26px;color:#f2f4f7">Склад №1 · Домодедово</h3>
+</div>
+<div style="margin-left:auto;display:flex;gap:8px">
+<div style="padding:7px 13px;border:1px solid rgba(233,237,241,.35);font:600 13px/1 var(--font-heading)">Сегодня</div>
+<div style="padding:7px 13px;background:var(--color-accent-300);color:var(--color-accent-900);font:600 13px/1 var(--font-heading)">Новый документ</div>
+</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:20px;background:rgba(233,237,241,.2)">
+<div style="background:var(--color-accent-900);padding:14px 16px">
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(233,237,241,.6)">ПОЗИЦИЙ НА СКЛАДЕ</div>
+<div style="font:600 32px/1 var(--font-heading);margin-top:10px;color:#f2f4f7">4 128</div>
+<div style="font-size:12px;color:var(--color-accent-300);margin-top:5px">+1,2% за неделю</div>
+</div>
+<div style="background:var(--color-accent-900);padding:14px 16px">
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(233,237,241,.6)">ЗАНЯТОСТЬ ЯЧЕЕК</div>
+<div style="font:600 32px/1 var(--font-heading);margin-top:10px;color:#f2f4f7">78%</div>
+<div style="height:5px;margin-top:11px;background:rgba(233,237,241,.2)"><div style="width:78%;height:100%;background:var(--color-accent-300)"></div></div>
+</div>
+<div style="background:var(--color-accent-900);padding:14px 16px">
+<div style="font:600 10px/1 var(--font-heading);letter-spacing:.14em;color:rgba(233,237,241,.6)">ОТГРУЗКА ЗА СМЕНУ</div>
+<div style="font:600 32px/1 var(--font-heading);margin-top:10px;color:#f2f4f7">142</div>
+<div style="font-size:12px;color:rgba(233,237,241,.7);margin-top:5px">строк заказа</div>
+</div>
+</div>
+<div style="display:flex;align-items:flex-end;gap:7px;height:110px;margin-top:22px;border-bottom:1px solid rgba(233,237,241,.22);padding-bottom:6px">
+<sc-for list="{{ chart }}" as="d" hint-placeholder-count="14">
+<div style="flex:1;height:100%;display:flex;gap:2px;align-items:flex-end">
+<div style="flex:1;height:{{ d.a }};background:var(--color-accent-300)"></div>
+<div style="flex:1;height:{{ d.b }};background:rgba(233,237,241,.35)"></div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:26px;margin-top:14px;font-size:11.5px;color:rgba(233,237,241,.7)">
+<span>приёмка / отгрузка, 14 дней</span><span style="margin-left:auto">пик 26 июня · 214 строк</span>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Вариант стиля: данные без рамок — плотная бумага, только линейки и цифры</div>
+<div style="width:700px;background:#fbfbfb;padding:24px 26px 26px;border:1px solid var(--color-divider);box-shadow:var(--shadow-sm)">
+<div style="display:flex;align-items:baseline;gap:14px">
+<h3 style="margin:0;font-size:26px">Обзор склада</h3>
+<div style="font-size:12px;color:rgba(29,31,32,.5)">обновлено 12:41</div>
+<div style="margin-left:auto;font:600 13px/1 var(--font-heading);color:var(--color-accent-700);border-bottom:1px solid var(--color-accent-700);padding-bottom:2px">Новый документ</div>
+</div>
+<div style="display:flex;gap:0;margin-top:22px">
+<div style="flex:1;padding-right:18px">
+<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.5)">Позиций</div>
+<div style="font:600 34px/1 var(--font-heading);margin-top:8px">4 128</div>
+</div>
+<div style="flex:1;padding:0 18px;border-left:1px solid var(--color-divider)">
+<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.5)">Ячейки</div>
+<div style="font:600 34px/1 var(--font-heading);margin-top:8px">78<span style="font-size:20px;color:rgba(29,31,32,.5)">%</span></div>
+</div>
+<div style="flex:1;padding:0 18px;border-left:1px solid var(--color-divider)">
+<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.5)">Приёмка</div>
+<div style="font:600 34px/1 var(--font-heading);margin-top:8px">6</div>
+</div>
+<div style="flex:1;padding-left:18px;border-left:1px solid var(--color-divider)">
+<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.5)">Отгрузка</div>
+<div style="font:600 34px/1 var(--font-heading);margin-top:8px">142</div>
+</div>
+</div>
+<div style="margin-top:26px;border-top:1px solid #1d1f20;padding-top:10px;display:flex;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(29,31,32,.55)">
+<div style="flex:1">Документ</div><div style="width:150px">Контрагент</div><div style="width:90px">Строк</div><div style="width:110px">Статус</div>
+</div>
+<sc-for list="{{ paperRows }}" as="r" hint-placeholder-count="6">
+<div class="wms-row" style="display:flex;align-items:center;padding:9px 0;border-bottom:1px solid rgba(29,31,32,.1);font-size:13.5px">
+<div style="flex:1;letter-spacing:.04em">{{ r.doc }}</div><div style="width:150px;color:rgba(29,31,32,.7)">{{ r.party }}</div><div style="width:90px;letter-spacing:.04em">{{ r.lines }}</div><div style="width:110px;color:{{ r.tone }}">{{ r.status }}</div>
+</div>
+</sc-for>
+<div style="margin-top:16px;font-size:11.5px;color:rgba(29,31,32,.5)">6 из 24 документов смены · остальные в журнале</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Дальше: «возьми стиль <a class="dv-oid" href="#1b">1b</a> для шапки прототипа» · «сделай экран приёмки как рабочее место кладовщика с крупными элементами» · «добавь карту склада с ячейками»</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1560,&quot;height&quot;:1040}}">
+const A='#5980a6', A7='#416180', WARN='#8a5a2b', BAD='#8a3b3b', MUT='rgba(29,31,32,.55)';
+const txt=(t,o={})=>({isText:true,isTag:false,text:t,fw:o.fw||400,ls:o.ls||'normal',color:o.color||'#1d1f20',just:o.right?'flex-end':'flex-start'});
+const code=t=>txt(t,{ls:'.06em',fw:500});
+const num=t=>txt(t,{ls:'.04em',right:true});
+const mutedC=t=>txt(t,{color:MUT});
+const tag=(t,k='tag-neutral')=>({isText:false,isTag:true,text:t,tag:k,just:'flex-start'});
+
+const SP=[38,52,44,70,58,66,49,80,62,74,55,68,60,86];
+const spark=off=>SP.map(v=>Math.max(14,Math.min(100,v+off))+'%');
+
+class Component extends DCLogic {
+  state={screen:'dash',drawer:null,selRow:null};
+
+  go(s){return()=>this.setState({screen:s,drawer:null,selRow:null});}
+
+  openItem(r){return()=>this.setState({drawer:r,selRow:r.sku});}
+
+  nav(){return[
+    {title:'РАБОЧИЙ СТОЛ',items:[['dash','Обзор склада','']]},
+    {title:'ОПЕРАЦИИ',items:[['receiving','Приёмка товара','6'],['shipping','Отгрузка и заказы','14'],['moves','Перемещения','3'],['count','Инвентаризация','1']]},
+    {title:'ЗАПАСЫ',items:[['items','Номенклатура','4128'],['suppliers','Поставщики','38']]},
+    {title:'АНАЛИТИКА',items:[['reports','Отчёты','']]},
+    {title:'СИСТЕМА',items:[['users','Пользователи и роли','21']]}
+  ].map(g=>({title:g.title,items:g.items.map(([id,label,count])=>{
+    const on=this.state.screen===id;
+    return {label,count,go:this.go(id),bg:on?'rgba(89,128,166,.14)':'transparent',fg:on?A7:'#1d1f20',cfg:on?A7:'rgba(29,31,32,.45)',fw:on?600:400,mark:on?A:'transparent'};
+  })}));}
+
+  views(){
+    const openable=r=>({...r,go:this.openItem(r),bg:this.state.selRow===r.sku?'rgba(89,128,166,.1)':'transparent'});
+    const plain=cells=>({cells,go:null,bg:'transparent'});
+    const F=(...labels)=>labels.map((l,i)=>({label:l,bg:i===0?A:'transparent',fg:i===0?'#f2f2f3':'#1d1f20',bd:i===0?A:'var(--color-divider)'}));
+
+    const items={kicker:'ЗАПАСЫ',title:'Номенклатура',subtitle:'4 128 позиций · 12 групп · единицы учёта: шт, кг, пал',
+      action1:'Добавить позицию',action2:'Экспорт',count:'показано 9 из 4 128',footnote:'сортировка: по остатку ↓',
+      filters:F('Все','Есть остаток','Ниже минимума','Без движения 90 дней'),
+      grid:'118px minmax(0,2.1fr) minmax(0,1fr) 110px 96px 152px',
+      columns:[{t:'SKU',align:'left'},{t:'Наименование',align:'left'},{t:'Группа',align:'left'},{t:'Ячейка',align:'left'},{t:'Остаток',align:'right'},{t:'Статус',align:'left'}],
+      rows:[
+        ['SKU-100428','Короб гофрокартон 400×300','Упаковка','A-01-04','1 240','Норма','tag-accent'],
+        ['SKU-100431','Короб гофрокартон 600×400','Упаковка','A-01-07','860','Норма','tag-accent'],
+        ['SKU-204117','Плёнка стрейч 17 мкм','Расходники','B-03-02','42','Ниже минимума','tag-outline'],
+        ['SKU-204119','Плёнка стрейч 23 мкм','Расходники','B-03-05','318','Норма','tag-accent'],
+        ['SKU-330800','Паллета EUR 1200×800','Тара','C-02-01','196','Норма','tag-accent'],
+        ['SKU-330812','Паллета пластиковая','Тара','C-02-06','24','Резерв','tag-neutral'],
+        ['SKU-511003','Лента клеевая 48 мм','Расходники','B-01-03','1 004','Норма','tag-accent'],
+        ['SKU-644210','Стеллажный контейнер 30 л','Оснастка','D-04-02','58','Инвентаризация','tag-neutral'],
+        ['SKU-644219','Стеллажный контейнер 60 л','Оснастка','D-04-05','0','Нет остатка','tag-outline']
+      ].map(([sku,name,grp,cell,qty,st,k])=>openable({sku,name,cell,qty,
+        cells:[code(sku),txt(name,{fw:500}),mutedC(grp),code(cell),num(qty),tag(st,k)],
+        stats:[{k:'Остаток',v:qty},{k:'Резерв',v:'12'},{k:'Мин. запас',v:'150'},{k:'Оборот, дн',v:'21'}],
+        places:[{cell,batch:'партия 2026-07 · годен до 04.27',qty},{cell:cell.replace(/\d+$/,'09'),batch:'партия 2026-05',qty:'120'},{cell:'ZONE-TRANSIT',batch:'в перемещении',qty:'24'}]
+      }))};
+
+    const receiving={kicker:'ОПЕРАЦИИ',title:'Приёмка товара',subtitle:'6 документов в работе · 2 машины на воротах',
+      action1:'Создать приёмку',action2:'Сканер ТСД',count:'6 документов',footnote:'обновлено 12:41',
+      filters:F('В работе','Ожидает разгрузки','Расхождения','Закрытые'),
+      grid:'150px minmax(0,1.6fr) 120px 96px 110px 140px',
+      columns:[{t:'Документ',align:'left'},{t:'Поставщик',align:'left'},{t:'Ворота',align:'left'},{t:'Строк',align:'right'},{t:'Принято',align:'right'},{t:'Статус',align:'left'}],
+      rows:[
+        ['ПР-004412','ТрансЛогистик','Ворота 2','48','48 / 48','Проверка','tag-neutral'],
+        ['ПР-004413','Северный завод','Ворота 1','120','86 / 120','Разгрузка','tag-accent'],
+        ['ПР-004414','ПакСервис','—','32','0 / 32','Ожидает','tag-outline'],
+        ['ПР-004415','ТрансЛогистик','Ворота 3','64','64 / 64','Размещение','tag-accent'],
+        ['ПР-004416','Балтийская тара','—','18','0 / 18','Ожидает','tag-outline'],
+        ['ПР-004410','ПакСервис','Ворота 2','96','94 / 96','Расхождение 2','tag-outline']
+      ].map(([d,s,g,l,r,st,k])=>plain([code(d),txt(s,{fw:500}),mutedC(g),num(l),num(r),tag(st,k)]))};
+
+    const shipping={kicker:'ОПЕРАЦИИ',title:'Отгрузка и заказы',subtitle:'14 заказов в смене · 3 волны сборки',
+      action1:'Создать волну',action2:'Печать этикеток',count:'14 заказов',footnote:'приоритет: по времени отправки',
+      filters:F('Все','Комплектация','Упаковка','Готово к отгрузке'),
+      grid:'150px minmax(0,1.6fr) 110px 96px 120px 140px',
+      columns:[{t:'Заказ',align:'left'},{t:'Клиент',align:'left'},{t:'Волна',align:'left'},{t:'Строк',align:'right'},{t:'Отправка',align:'right'},{t:'Статус',align:'left'}],
+      rows:[
+        ['ЗК-88104','Ритейл-Сеть Юг','Волна 1','24','14:00','Комплектация','tag-accent'],
+        ['ЗК-88105','Ритейл-Сеть Юг','Волна 1','18','14:00','Комплектация','tag-accent'],
+        ['ЗК-88106','Маркет Восток','Волна 2','62','16:30','Собран','tag-neutral'],
+        ['ЗК-88107','Оптовик №4','Волна 2','12','16:30','Упаковка','tag-accent'],
+        ['ЗК-88108','Городская сеть','Волна 3','88','18:00','Ожидает','tag-outline'],
+        ['ЗК-88109','Маркет Восток','Волна 3','34','18:00','Ожидает','tag-outline'],
+        ['ЗК-88099','Оптовик №4','—','40','12:00','Отгружен','tag-neutral'],
+        ['ЗК-88100','Ритейл-Сеть Юг','—','26','12:00','Отгружен','tag-neutral'],
+        ['ЗК-88101','Склад-партнёр','—','9','12:30','Недостача 1','tag-outline']
+      ].map(([d,s,w,l,t,st,k])=>plain([code(d),txt(s,{fw:500}),mutedC(w),num(l),num(t),tag(st,k)]))};
+
+    const moves={kicker:'ОПЕРАЦИИ',title:'Перемещения между ячейками',subtitle:'3 задания в работе · пополнение зоны отбора',
+      action1:'Новое перемещение',action2:'Правила пополнения',count:'8 заданий',footnote:'исполнители: 4 кладовщика',
+      filters:F('Активные','Пополнение','Консолидация','Выполненные'),
+      grid:'140px minmax(0,1.4fr) 110px 110px 96px 140px',
+      columns:[{t:'Задание',align:'left'},{t:'Позиция',align:'left'},{t:'Откуда',align:'left'},{t:'Куда',align:'left'},{t:'Кол-во',align:'right'},{t:'Статус',align:'left'}],
+      rows:[
+        ['ПМ-2201','Короб 400×300','A-01-04','P-01-02','240','Выполняется','tag-accent'],
+        ['ПМ-2202','Плёнка стрейч 23 мкм','B-03-05','P-02-01','60','Выполняется','tag-accent'],
+        ['ПМ-2203','Паллета EUR','C-02-01','C-02-08','40','Назначено','tag-outline'],
+        ['ПМ-2204','Лента клеевая 48 мм','B-01-03','P-01-06','120','Назначено','tag-outline'],
+        ['ПМ-2198','Контейнер 30 л','D-04-02','D-01-01','18','Готово','tag-neutral'],
+        ['ПМ-2199','Короб 600×400','A-01-07','P-01-03','80','Готово','tag-neutral'],
+        ['ПМ-2200','Плёнка стрейч 17 мкм','B-03-02','ZONE-QA','12','Отменено','tag-neutral']
+      ].map(([d,n,f,t,q,st,k])=>plain([code(d),txt(n,{fw:500}),code(f),code(t),num(q),tag(st,k)]))};
+
+    const count={kicker:'ОПЕРАЦИИ',title:'Инвентаризация',subtitle:'Цикличный пересчёт зоны B · день 2 из 5',
+      action1:'Начать пересчёт',action2:'Лист расхождений',count:'зона B · 148 ячеек',footnote:'точность учёта 98,6%',
+      filters:F('Открытые','Расхождения','Подтверждено','Архив'),
+      grid:'110px 130px minmax(0,1.3fr) 100px 100px 140px',
+      columns:[{t:'Ячейка',align:'left'},{t:'SKU',align:'left'},{t:'Позиция',align:'left'},{t:'Учёт',align:'right'},{t:'Факт',align:'right'},{t:'Расхождение',align:'left'}],
+      rows:[
+        ['B-01-01','SKU-511003','Лента клеевая 48 мм','1 004','1 004','Совпало','tag-accent'],
+        ['B-03-02','SKU-204117','Плёнка стрейч 17 мкм','54','42','−12','tag-outline'],
+        ['B-03-05','SKU-204119','Плёнка стрейч 23 мкм','318','318','Совпало','tag-accent'],
+        ['B-04-02','SKU-644210','Контейнер 30 л','58','60','+2','tag-outline'],
+        ['B-04-07','SKU-100428','Короб 400×300','240','240','Совпало','tag-accent'],
+        ['B-05-01','SKU-330800','Паллета EUR','96','96','Совпало','tag-accent'],
+        ['B-05-04','SKU-100431','Короб 600×400','120','118','−2','tag-outline'],
+        ['B-06-02','SKU-644219','Контейнер 60 л','0','0','Пусто','tag-neutral']
+      ].map(([c,s,n,u,f,d,k])=>plain([code(c),code(s),txt(n,{fw:500}),num(u),num(f),tag(d,k)]))};
+
+    const suppliers={kicker:'ЗАПАСЫ',title:'Поставщики',subtitle:'38 контрагентов · 12 с активными поставками',
+      action1:'Добавить поставщика',action2:'График поставок',count:'8 из 38',footnote:'рейтинг: по срокам поставки',
+      filters:F('Активные','С задержками','Новые','Архив'),
+      grid:'minmax(0,1.5fr) 150px 120px 110px 110px 130px',
+      columns:[{t:'Поставщик',align:'left'},{t:'Договор',align:'left'},{t:'Поставок, мес',align:'right'},{t:'В срок',align:'right'},{t:'Позиций',align:'right'},{t:'Статус',align:'left'}],
+      rows:[
+        ['ТрансЛогистик','Д-2024-118','14','98%','420','Активен','tag-accent'],
+        ['Северный завод','Д-2023-044','8','92%','186','Активен','tag-accent'],
+        ['ПакСервис','Д-2025-201','11','76%','340','Задержки','tag-outline'],
+        ['Балтийская тара','Д-2024-160','5','100%','64','Активен','tag-accent'],
+        ['УралКомплект','Д-2022-012','2','88%','28','На проверке','tag-neutral'],
+        ['Сибпром','Д-2025-233','6','95%','112','Активен','tag-accent'],
+        ['ТаможТорг','Д-2021-009','0','—','18','Архив','tag-neutral'],
+        ['ЭкоПак','Д-2026-004','3','81%','74','Новый','tag-neutral']
+      ].map(([n,d,m,s,p,st,k])=>plain([txt(n,{fw:500}),code(d),num(m),num(s),num(p),tag(st,k)]))};
+
+    const users={kicker:'СИСТЕМА',title:'Пользователи и роли',subtitle:'21 учётная запись · 5 ролей · вход по пропуску',
+      action1:'Добавить пользователя',action2:'Матрица прав',count:'8 из 21',footnote:'политика: пароль 90 дней',
+      filters:F('Все','Кладовщики','Менеджеры','Отключённые'),
+      grid:'minmax(0,1.3fr) 150px 130px 140px 120px 130px',
+      columns:[{t:'Сотрудник',align:'left'},{t:'Роль',align:'left'},{t:'Зона',align:'left'},{t:'Последний вход',align:'left'},{t:'ТСД',align:'left'},{t:'Статус',align:'left'}],
+      rows:[
+        ['А. Ковалёв','Менеджер склада','Все зоны','сегодня 07:12','—','Активен','tag-accent'],
+        ['И. Дёмин','Кладовщик','Зона A','сегодня 07:02','ТСД-04','На линии','tag-accent'],
+        ['М. Сотникова','Кладовщик','Зона B','сегодня 07:05','ТСД-11','На линии','tag-accent'],
+        ['П. Орлов','Оператор учёта','—','сегодня 08:40','—','Активен','tag-accent'],
+        ['С. Гуров','Кладовщик','Зона C','вчера 18:50','ТСД-07','Смена закрыта','tag-neutral'],
+        ['Е. Лапина','Контролёр','Зона QA','сегодня 09:15','ТСД-02','На линии','tag-accent'],
+        ['Д. Ким','Кладовщик','Зона D','12.09 19:04','—','Отпуск','tag-neutral'],
+        ['Н. Шевцов','Аудитор','Все зоны','08.09 11:20','—','Отключён','tag-outline']
+      ].map(([n,r,z,l,t,st,k])=>plain([txt(n,{fw:500}),mutedC(r),code(z),mutedC(l),code(t),tag(st,k)]))};
+
+    return {items,receiving,shipping,moves,count,suppliers,users,
+      reports:{kicker:'АНАЛИТИКА',title:'Отчёты и аналитика',subtitle:'Период: 01.08 — 16.09.2026 · склад №1',action1:'Выгрузить отчёт',action2:'Настроить период'}};
+  }
+
+  renderVals(){
+    const s=this.state.screen, v=this.views()[s];
+    const dash={kicker:'РАБОЧИЙ СТОЛ',title:'Обзор склада',subtitle:'Смена 07:00–19:00 · данные обновлены 2 минуты назад',action1:'Новый документ',action2:'Сегодня'};
+    return {
+      navGroups:this.nav(),
+      view:v||dash,
+      isDash:s==='dash', isReports:s==='reports', isTable:!!(v&&v.rows),
+      hasDrawer:!!this.state.drawer, drawer:this.state.drawer||{},
+      closeDrawer:()=>this.setState({drawer:null,selRow:null}),
+      kpis:[
+        {label:'ПОЗИЦИЙ НА СКЛАДЕ',value:'4 128',delta:'+1,2%',tone:A7,spark:spark(0)},
+        {label:'ЗАНЯТОСТЬ ЯЧЕЕК',value:'78%',delta:'+3 п.п.',tone:A7,spark:spark(6)},
+        {label:'ПРИЁМКА В РАБОТЕ',value:'6',delta:'2 у ворот',tone:MUT,spark:spark(-18)},
+        {label:'ОТГРУЗКА ЗА СМЕНУ',value:'142',delta:'строк заказа',tone:MUT,spark:spark(12)}
+      ],
+      chart:['03','04','05','06','07','10','11','12','13','14','17','18','19','20'].map((label,i)=>({label,a:Math.max(18,SP[i])+'%',b:Math.max(14,(SP[13-i]-10))+'%'})),
+      alerts:[
+        {title:'Ниже минимального запаса',meta:'14 позиций · зона B, D',value:'14',tone:BAD,go:this.go('items')},
+        {title:'Расхождение при приёмке ПР-004410',meta:'ПакСервис · 2 строки',value:'2',tone:WARN,go:this.go('receiving')},
+        {title:'Заказы без сборщика',meta:'волна 3 · отправка 18:00',value:'2',tone:WARN,go:this.go('shipping')},
+        {title:'Пересчёт зоны B не завершён',meta:'день 2 из 5 · 148 ячеек',value:'42%',tone:A,go:this.go('count')},
+        {title:'Партии с истекающим сроком',meta:'до 30 дней · 6 партий',value:'6',tone:WARN,go:this.go('items')}
+      ],
+      zones:[
+        {name:'Зона A',pct:'86%',cells:'412/480',fill:A},{name:'Зона B',pct:'74%',cells:'356/480',fill:A},
+        {name:'Зона C',pct:'92%',cells:'221/240',fill:'#8a5a2b'},{name:'Зона D',pct:'61%',cells:'146/240',fill:A},
+        {name:'Отбор P',pct:'48%',cells:'58/120',fill:'var(--color-accent-400)'},{name:'Транзит',pct:'23%',cells:'14/60',fill:'var(--color-accent-400)'}
+      ],
+      repKpis:[
+        {label:'ОБОРАЧИВАЕМОСТЬ',value:'21 дн',note:'−3 дня к прошлому периоду'},
+        {label:'ТОЧНОСТЬ УЧЁТА',value:'98,6%',note:'по результатам цикличных пересчётов'},
+        {label:'СТРОК В ЧАС НА КЛАДОВЩИКА',value:'38',note:'цель 42 · зона отбора P'}
+      ],
+      repBars:['Окт','Ноя','Дек','Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен'].map((label,i)=>{
+        const vals=[29,31,34,27,26,24,25,23,24,22,21,21]; const h=(vals[i]/36*100)+'%';
+        return {label,value:vals[i],h,fill:i>=10?A:'var(--color-accent-300)'};
+      }),
+      repTop:[
+        {n:'01',name:'Короб гофрокартон 400×300',qty:'18 240',pct:'100%'},
+        {n:'02',name:'Лента клеевая 48 мм',qty:'12 060',pct:'66%'},
+        {n:'03',name:'Плёнка стрейч 23 мкм',qty:'9 480',pct:'52%'},
+        {n:'04',name:'Короб гофрокартон 600×400',qty:'7 120',pct:'39%'},
+        {n:'05',name:'Паллета EUR 1200×800',qty:'4 380',pct:'24%'},
+        {n:'06',name:'Контейнер 30 л',qty:'2 140',pct:'12%'}
+      ],
+      repMix:[
+        {name:'Упаковка',pct:'34%',fill:A},{name:'Расходники',pct:'26%',fill:'var(--color-accent-500)'},
+        {name:'Тара',pct:'18%',fill:'var(--color-accent-400)'},{name:'Оснастка',pct:'12%',fill:'var(--color-accent-300)'},
+        {name:'Запчасти',pct:'7%',fill:'var(--color-neutral-400)'},{name:'Прочее',pct:'3%',fill:'var(--color-neutral-300)'}
+      ],
+      paperRows:[
+        {doc:'ПР-004413',party:'Северный завод',lines:'120',status:'Разгрузка',tone:A7},
+        {doc:'ПР-004410',party:'ПакСервис',lines:'96',status:'Расхождение',tone:BAD},
+        {doc:'ЗК-88106',party:'Маркет Восток',lines:'62',status:'Собран',tone:MUT},
+        {doc:'ЗК-88108',party:'Городская сеть',lines:'88',status:'Ожидает',tone:WARN},
+        {doc:'ПМ-2201',party:'внутреннее',lines:'1',status:'Выполняется',tone:A7},
+        {doc:'ИН-0042',party:'зона B',lines:'148',status:'День 2 из 5',tone:MUT}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# .NET / backend
+bin/
+obj/
+*.user
+*.suo
+
+# IDEs
+.idea/
+.vs/
+.vscode/
+
+# OS
+.DS_Store
+
+# env / local secrets
+.env
+.env.local
+.env.*.local
