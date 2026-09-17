@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class Product
 {
-    [JsonIgnore]
     public int Id { get; set; }
 
     public string Sku { get; set; } = null!;

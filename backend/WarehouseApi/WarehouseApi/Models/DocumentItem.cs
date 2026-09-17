@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class DocumentItem
 {
-    [JsonIgnore]
     public int Id { get; set; }
 
     public int DocumentId { get; set; }

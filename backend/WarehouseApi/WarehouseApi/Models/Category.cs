@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class Category
 {
-    [JsonIgnore]
     public int Id { get; set; }
 
     public string Name { get; set; } = null!;

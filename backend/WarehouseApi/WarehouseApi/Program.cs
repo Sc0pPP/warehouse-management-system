@@ -42,7 +42,7 @@ app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext co
         Barcode = request.Barcode,
         MinStockLevel = request.MinStockLevel,
         Price = request.Price,
-        IsActive = true
+        IsActive = request.IsActive
     };
 
     context.Products.Add(product);
@@ -51,8 +51,9 @@ app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext co
     return Results.Created($"/api/products/{product.Id}", product);
 });
 
-app.MapPatch($"/api/products", (int id, UpdateProductRequest request, WarehouseDbContext context) =>
+app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, WarehouseDbContext context) =>
 {
+    
     var product = context.Products.Find(id);
     if (product is null) return Results.NotFound();
 

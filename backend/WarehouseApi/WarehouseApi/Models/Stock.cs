@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class Stock
 {
-    [JsonIgnore]
     public int Id { get; set; }
 
     public int ProductId { get; set; }

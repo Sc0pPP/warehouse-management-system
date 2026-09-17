@@ -6,7 +6,7 @@ namespace WarehouseApi.Models;
 
 public partial class Counterparty
 {
-    [JsonIgnore]
+   
     public int Id { get; set; }
 
     public int TypeId { get; set; }

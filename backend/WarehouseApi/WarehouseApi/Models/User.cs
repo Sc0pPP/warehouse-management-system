@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class User
 {
-    [JsonIgnore]
     public int Id { get; set; }
 
     public string Username { get; set; } = null!;
