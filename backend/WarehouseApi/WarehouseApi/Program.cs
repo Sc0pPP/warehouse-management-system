@@ -120,4 +120,32 @@ app.MapDelete("/api/categories/{id}", (int id, WarehouseDbContext context) =>
     context.SaveChanges();
     return Results.NoContent();
 });
+
+//Warehouses and Stock
+
+app.MapGet("/api/warehouses", (WarehouseDbContext context) =>
+{
+    return context.Warehouses.ToList();
+});
+
+app.MapPost("/api/warehouses", (CreateWarehouseRequest request, WarehouseDbContext context) =>
+{
+    var warehouse = new Warehouse
+    {
+        Name = request.Name,
+        Address= request.Address
+    };
+    context.Warehouses.Add(warehouse);
+    context.SaveChanges();
+    return Results.Created($"/api/warehouses/{warehouse.Id}", warehouse);
+});
+app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, WarehouseDbContext context) =>
+{
+    var warehouse = context.Warehouses.Find(id);
+    if(warehouse is null) return Results.NotFound();
+    if(request.Name is not null) warehouse.Name=request.Name;
+    if(request.Address is not null) warehouse.Address=request.Address;
+    context.SaveChanges();
+    return Results.NoContent();
+});
 app.Run();
