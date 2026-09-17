@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="Desktop.Android/Desktop.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="Desktop.Browser/Desktop.Browser.csproj" />
+  <Project Path="Desktop.Desktop/Desktop.Desktop.csproj" />
+  <Project Path="Desktop.iOS/Desktop.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="Desktop/Desktop.csproj" />
+</Solution>
