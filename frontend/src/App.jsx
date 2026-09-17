@@ -18,10 +18,55 @@ function App() {
     isActive: true,
   });
 
+  const [roles, setRoles] = useState([]);
+  const [counterpartyTypes, setCounterpartyTypes] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [refsLoading, setRefsLoading] = useState(true);
+  const [refsError, setRefsError] = useState(null);
+
   useEffect(() => {
-    // TODO 1 (см. docs/frontend-integration-howto.md, шаг 1):
-    // сходить за GET {API_BASE}/products и результат положить в setProducts(...).
-    // Не забыть setLoading(false) и обработку ошибки в setError(...).
+    async function loadReferences() {
+      try {
+        const [rolesRes, typesRes, docTypesRes, categoriesRes] = await Promise.all([
+          fetch(`${API_BASE}/roles`),
+          fetch(`${API_BASE}/counterparty-types`),
+          fetch(`${API_BASE}/document-types`),
+          fetch(`${API_BASE}/categories`),
+        ]);
+        if (!rolesRes.ok || !typesRes.ok || !docTypesRes.ok || !categoriesRes.ok) {
+          throw new Error("Ошибка сервера при загрузке справочников");
+        }
+        setRoles(await rolesRes.json());
+        setCounterpartyTypes(await typesRes.json());
+        setDocumentTypes(await docTypesRes.json());
+        setCategories(await categoriesRes.json());
+      } catch (err) {
+        setRefsError(err.message);
+      } finally {
+        setRefsLoading(false);
+      }
+    }
+    loadReferences();
+  }, []);
+
+  useEffect(() => {
+    async function loadProducts() {
+      try{
+        const response = await fetch(API_BASE + "/products");
+        if(!response.ok){
+          throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        const json = await response.json();
+        setProducts(json);
+      }catch (err){
+        setError(err.message);
+      }
+      finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
   }, []);
 
   function handleFormChange(e) {
@@ -31,13 +76,43 @@ function App() {
 
   async function handleCreate(e) {
     e.preventDefault();
-    // TODO 2 (шаг 2): отправить POST {API_BASE}/products с телом = form (JSON.stringify).
-    // После успешного ответа — добавить созданный товар в products (setProducts).
+    async function AddProduct(){
+      try{
+        const response = await fetch(`${API_BASE}/products`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        if(!response.ok){
+          throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        const created = await response.json();
+        setProducts((prev) => [...prev, created]);
+      }
+      catch (err) {
+        setError(err.message);
+      }
+
+    }
+    AddProduct();
+    {}
   }
 
   async function handleDelete(id) {
-    // TODO 3 (шаг 3): отправить DELETE {API_BASE}/products/{id}.
-    // После успеха — убрать товар с этим id из products (setProducts).
+    async function DeleteProduct(id) {
+      try{
+        const response = await fetch(`${API_BASE}/products/${id}`, { method: "DELETE" });
+        if(!response.ok){
+          throw new Error(`Ошибка сервера: ${response.status}`);
+        }
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+      }
+      catch (err) {
+        setError(err.message);
+      }
+    }
+    DeleteProduct(id);
+    {}
   }
 
   return (
@@ -101,6 +176,48 @@ function App() {
               ))}
             </tbody>
           </table>
+        )}
+      </section>
+
+      <section style={{ marginTop: 32 }}>
+        <h2>Справочники</h2>
+        {refsError && <p style={{ color: "red" }}>Ошибка: {refsError}</p>}
+        {refsLoading && !refsError && <p>Загрузка...</p>}
+        {!refsLoading && !refsError && (
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            <div>
+              <h3>Роли</h3>
+              <ul>
+                {roles.map((r) => (
+                  <li key={r.id}>{r.name}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>Типы контрагентов</h3>
+              <ul>
+                {counterpartyTypes.map((t) => (
+                  <li key={t.id}>{t.name}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>Типы документов</h3>
+              <ul>
+                {documentTypes.map((t) => (
+                  <li key={t.id}>{t.name}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>Категории</h3>
+              <ul>
+                {categories.map((c) => (
+                  <li key={c.id}>{c.name}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
         )}
       </section>
     </div>

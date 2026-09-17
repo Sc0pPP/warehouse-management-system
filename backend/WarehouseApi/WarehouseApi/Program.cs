@@ -69,7 +69,55 @@ app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, Wareho
 app.MapDelete( "/api/products/{id}" ,(int id,WarehouseDbContext context)=>{
 
     context.Products.RemoveRange(context.Products.Where(x => x.Id == id));
+    context.SaveChanges();  
     return Results.NoContent();
 });
 
+//Reference
+app.MapGet("/api/roles", (WarehouseDbContext context) =>
+{
+ return(context.Roles.ToList());
+});
+
+app.MapGet("/api/counterparty-types", (WarehouseDbContext context) =>
+{
+return(context.CounterpartyTypes.ToList());
+});
+
+app.MapGet("/api/document-types", (WarehouseDbContext context) =>
+{
+    return(context.DocumentTypes.ToList());
+});
+
+app.MapGet("/api/categories", (WarehouseDbContext context) =>
+{
+    return (context.Categories.ToList());
+});
+
+app.MapPost("/api/categories", (CreateCategoryRequest request, WarehouseDbContext context) =>
+{
+    var сategory = new Category
+    {
+        Name = request.Name
+    };
+    context.Categories.Add(сategory);
+    context.SaveChanges();
+    return Results.Created($"/api/categories/{сategory.Id}", сategory);
+});
+
+app.MapPatch("/api/categories/{id}", (int id, UpdateCategoryRequest request, WarehouseDbContext context) =>
+{
+var category = context.Categories.Find(id);
+if(category is null) return Results.NotFound();
+if(request.Name is not null) category.Name=request.Name;
+context.SaveChanges();
+return Results.Ok(category);
+});
+
+app.MapDelete("/api/categories/{id}", (int id, WarehouseDbContext context) =>
+{
+    context.Categories.RemoveRange(context.Categories.Where(x => x.Id == id));
+    context.SaveChanges();
+    return Results.NoContent();
+});
 app.Run();
