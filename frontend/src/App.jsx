@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Products } from "./pages/Products.jsx";
 import { References } from "./pages/References.jsx";
+import { Warehouses } from "./pages/Warehouses.jsx";
 
 // Список пунктов меню слева: id — внутреннее имя экрана (используем в коде),
 // label — то, что видит пользователь на кнопке.
 const NAV_ITEMS = [
   { id: "products", label: "Номенклатура" },
+  { id: "warehouses", label: "Склады" },
   { id: "references", label: "Справочники" },
 ];
 
@@ -45,6 +47,7 @@ function App() {
           Одновременно показывается только один: остальные условия — false. */}
       <main style={{ flex: 1, padding: 24 }}>
         {screen === "products" && <Products />}
+        {screen === "warehouses" && <Warehouses />}
         {screen === "references" && <References />}
       </main>
     </div>
