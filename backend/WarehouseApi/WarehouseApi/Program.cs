@@ -25,7 +25,7 @@ app.MapGet("/api/products", (WarehouseDbContext context)=>{
     return context.Products.ToList();
 });
 
-app.MapGet("/api/products/{id}", (int id, WarehouseDbContext? context) =>
+app.MapGet("/api/products/{id}", (int id, WarehouseDbContext context) =>
 {
 return context.Products.FirstOrDefault(x => x.Id == id);
 
@@ -51,7 +51,24 @@ app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext co
     return Results.Created($"/api/products/{product.Id}", product);
 });
 
-app.MapPut()
+app.MapPatch($"/api/products", (int id, UpdateProductRequest request, WarehouseDbContext context) =>
+{
+    var product = context.Products.Find(id);
+    if (product is null) return Results.NotFound();
 
+    if (request.Name is not null) product.Name = request.Name;
+    if (request.Price is not null) product.Price = request.Price.Value;
+    if (request.MinStockLevel is not null) product.MinStockLevel = request.MinStockLevel.Value;
+    if (request.IsActive is not null) product.IsActive = request.IsActive.Value;
+
+    context.SaveChanges();
+    return Results.Ok(product);
+});
+
+app.MapDelete( "/api/products/{id}" ,(int id,WarehouseDbContext context)=>{
+
+    context.Products.RemoveRange(context.Products.Where(x => x.Id == id));
+    return Results.NoContent();
+});
 
 app.Run();

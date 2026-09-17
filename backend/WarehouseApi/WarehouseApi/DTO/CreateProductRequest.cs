@@ -7,5 +7,6 @@ public record CreateProductRequest(
     string Unit,
     string? Barcode,
     decimal MinStockLevel,
-    decimal Price
+    decimal Price,
+    bool IsActive
     );
