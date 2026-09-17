@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./Products.css";
 
 // Адрес бэкенда. Пока просто копируем эту строку в каждый файл-страницу;
 // когда таких файлов станет много, вынесем в отдельный api.js, чтобы менять
@@ -91,67 +92,108 @@ export function Products() {
 
   return (
     <div>
-      <h1>Номенклатура (черновик)</h1>
+      {/* Шапка страницы: "eyebrow"-подпись сверху + заголовок + счётчик —
+          тот же приём, что в мокапах (kicker / title / subtitle). */}
+      <div className="page-head">
+        <div className="page-kicker">ЗАПАСЫ</div>
+        <h1>Номенклатура</h1>
+        <div className="page-subtitle">{products.length} товаров</div>
+      </div>
 
-      <section style={{ marginBottom: 32 }}>
-        <h2>Добавить товар</h2>
-        <form onSubmit={handleCreate} style={{ display: "grid", gap: 8, maxWidth: 360 }}>
-          <input name="sku" placeholder="SKU" value={form.sku} onChange={handleFormChange} />
-          <input name="name" placeholder="Название" value={form.name} onChange={handleFormChange} />
-          <input
-            name="categoryId"
-            type="number"
-            placeholder="ID категории"
-            value={form.categoryId}
-            onChange={handleFormChange}
-          />
-          <input name="unit" placeholder="Ед. изм." value={form.unit} onChange={handleFormChange} />
-          <input name="barcode" placeholder="Штрихкод" value={form.barcode} onChange={handleFormChange} />
-          <input
-            name="minStockLevel"
-            type="number"
-            placeholder="Мин. остаток"
-            value={form.minStockLevel}
-            onChange={handleFormChange}
-          />
-          <input name="price" type="number" placeholder="Цена" value={form.price} onChange={handleFormChange} />
-          <label>
+      {/* .card и .blueprint — готовые классы дизайн-системы (карточка с рамкой) */}
+      <div className="card form-card">
+        <h5>Добавить товар</h5>
+        <form onSubmit={handleCreate} className="form-grid">
+          <div className="field">
+            <label>SKU</label>
+            <input className="input" name="sku" value={form.sku} onChange={handleFormChange} />
+          </div>
+          <div className="field">
+            <label>Название</label>
+            <input className="input" name="name" value={form.name} onChange={handleFormChange} />
+          </div>
+          <div className="field">
+            <label>ID категории</label>
+            <input
+              className="input"
+              name="categoryId"
+              type="number"
+              value={form.categoryId}
+              onChange={handleFormChange}
+            />
+          </div>
+          <div className="field">
+            <label>Ед. изм.</label>
+            <input className="input" name="unit" value={form.unit} onChange={handleFormChange} />
+          </div>
+          <div className="field">
+            <label>Штрихкод</label>
+            <input className="input" name="barcode" value={form.barcode} onChange={handleFormChange} />
+          </div>
+          <div className="field">
+            <label>Мин. остаток</label>
+            <input
+              className="input"
+              name="minStockLevel"
+              type="number"
+              value={form.minStockLevel}
+              onChange={handleFormChange}
+            />
+          </div>
+          <div className="field">
+            <label>Цена</label>
+            <input className="input" name="price" type="number" value={form.price} onChange={handleFormChange} />
+          </div>
+          <label className="checkbox-row">
             <input name="isActive" type="checkbox" checked={form.isActive} onChange={handleFormChange} />
-            {" "}Активен
+            Активен
           </label>
-          <button type="submit">Создать</button>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              Создать
+            </button>
+          </div>
         </form>
-      </section>
+      </div>
 
-      <section>
-        <h2>Список товаров</h2>
-        {error && <p style={{ color: "red" }}>Ошибка: {error}</p>}
-        {loading && !error && <p>Загрузка...</p>}
-        {!loading && !error && (
-          <table cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>
-                <th>SKU</th>
-                <th>Название</th>
-                <th>Цена</th>
-                <th></th>
+      <h5>Список товаров</h5>
+      {/* .text-muted — приглушённый серый текст из дизайн-системы */}
+      {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
+      {loading && !error && <p className="text-muted">Загрузка...</p>}
+      {!loading && !error && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Название</th>
+              <th style={{ textAlign: "right" }}>Цена</th>
+              <th>Статус</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((p) => (
+              <tr key={p.id}>
+                <td>{p.sku}</td>
+                <td>{p.name}</td>
+                <td style={{ textAlign: "right" }}>{p.price} ₽</td>
+                <td>
+                  {/* Тег с двумя вариантами цвета — активен/неактивен.
+                      Шаблонная строка собирает второй класс в зависимости от p.isActive. */}
+                  <span className={`tag ${p.isActive ? "tag-accent" : "tag-neutral"}`}>
+                    {p.isActive ? "Активен" : "Неактивен"}
+                  </span>
+                </td>
+                <td>
+                  <button className="btn btn-secondary" onClick={() => handleDelete(p.id)}>
+                    Удалить
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td>{p.sku}</td>
-                  <td>{p.name}</td>
-                  <td>{p.price}</td>
-                  <td>
-                    <button onClick={() => handleDelete(p.id)}>Удалить</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
