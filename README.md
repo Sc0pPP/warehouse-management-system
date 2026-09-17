@@ -8,7 +8,8 @@
 Kursach/
 ├── database/     — SQL-схема и тестовые данные (готово, накатано в локальный Postgres)
 ├── frontend/     — React-приложение (черновик, реальный код, уже запускается)
-├── backend/      — сюда ляжет C#/ASP.NET Core проект (пока пусто — твоя часть)
+├── backend/      — C#/ASP.NET Core проект, пишется по ходу
+├── Desktop/      — Avalonia-оболочка, встраивает frontend/ через WebView (см. ниже про net8.0)
 ├── docs/         — контракт API и прочая документация для стыковки фронта с бэком
 ├── design/       — экспорт UI-мокапов (чертёжный/индустриальный стиль), взят за основу фронта
 └── .claude/      — launch.json для запуска дев-сервера фронта через превью-инструмент
@@ -28,9 +29,10 @@ Vite + React (обычный JS, без TypeScript). Сейчас это осо�
 
 ```
 frontend/src/
-├── App.jsx     — вся текущая страница: форма создания товара + список + удаление.
-│                 Три места помечены TODO 1/2/3 — туда сам пишешь fetch к своим эндпоинтам
-│                 (см. docs/frontend-integration-howto.md, там расписано, что куда).
+├── App.jsx     — вся текущая страница: форма создания товара + список + удаление,
+│                 плюс раздел "Справочники" (роли, типы контрагентов/документов, категории).
+│                 Три места были помечены TODO 1/2/3 — уже реализованы руками по рецепту
+│                 из docs/frontend-integration-howto.md.
 ├── index.css   — по паре строк на фон/цвет, стилизация будет наращиваться постепенно
 └── main.jsx    — стандартный входной файл Vite, не трогали
 ```
@@ -44,7 +46,19 @@ npm run dev
 
 ### `backend/`
 
-`backend/WarehouseApi/` — реальный ASP.NET Core проект (Minimal API + EF Core + Npgsql), пишется по ходу. На сейчас реализованы `GET/POST/PATCH/DELETE /api/products`. Строка подключения к БД — в `database/README.md` и в `appsettings.json` проекта.
+`backend/WarehouseApi/` — ASP.NET Core проект (Minimal API + EF Core + Npgsql), пишется по ходу. На сейчас реализованы `GET/POST/PATCH/DELETE /api/products` и справочники для чтения: `GET /api/roles`, `/api/counterparty-types`, `/api/document-types`, плюс полный `GET/POST/PATCH/DELETE /api/categories`. Строка подключения к БД — в `database/README.md` и в `appsettings.json` проекта. Работает на `http://localhost:5034`.
+
+### `Desktop/`
+
+`Desktop/Desktop/` — Avalonia-оболочка (шаблон MVVM: `Desktop` — общий проект, `Desktop.Desktop` — десктоп-хост). `MainView.axaml` показывает `frontend/` через `WebView` (пакет `WebView.Avalonia`), сейчас указывает на дев-сервер `http://localhost:5173`.
+
+**Важно:** этот проект специально на `TargetFramework net8.0`, а не `net10.0`, как остальные .NET-проекты. `WebView.Avalonia` (последняя версия, `11.0.0.1`) не обновлялась с релиза Avalonia 11.0 и падает с `MissingMethodException`/`AmbiguousMatchException` на связке Avalonia 12.x + .NET 10 — рабочая комбинация только `Avalonia 11.0.13` + `net8.0`. Версии зафиксированы централизованно в `Directory.Packages.props`. Для сборки нужен установленный **.NET 8 SDK** дополнительно к .NET 10 (`brew install dotnet-sdk@8`, ставится рядом, не конфликтует).
+
+Запуск (фронт должен быть поднят отдельно, см. выше):
+```bash
+cd Desktop/Desktop
+dotnet run --project Desktop.Desktop
+```
 
 ### `docs/`
 
@@ -58,16 +72,15 @@ npm run dev
 ## Как всё это связано
 
 ```
-design/ (мокапы, стиль)  ──> frontend/src/styles/design-system.css ──> frontend/ (реальный React)
-                                                                              │
-                                                                    fetch по контракту
-                                                                              │
-                                                                              ▼
-                                                              docs/api-endpoints.md (контракт)
-                                                                              │
-                                                                              ▼
-                                                    backend/ (C#, ASP.NET Core) ──> database/ (Postgres)
+design/ (мокапы, стиль)  ──> frontend/ (React) ──> WebView ──> Desktop/ (Avalonia, окно)
+                                    │
+                          fetch по контракту (docs/api-endpoints.md)
+                                    │
+                                    ▼
+                      backend/ (C#, ASP.NET Core) ──> database/ (Postgres)
 ```
+
+Фронт как веб-страница (браузер, `localhost:5173`) и как содержимое `WebView` внутри Avalonia-окна — это один и тот же код, никакой отдельной "десктопной" версии фронта не пишется.
 
 ## Что дальше
 
