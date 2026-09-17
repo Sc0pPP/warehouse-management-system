@@ -1,0 +1,72 @@
+/* Стили каркаса приложения (сайдбар + область контента).
+   Раньше это были инлайн style={{...}} прямо в JSX — переносим в обычный
+   CSS-класс по двум причинам:
+   1) инлайн-стили не умеют :hover и другие псевдоклассы;
+   2) переменные вида var(--color-accent) берутся из design-system.css —
+      так цвета/шрифты одинаковые во всём приложении, а не разбросаны по файлам. */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0; /* не даём сайдбару сжиматься, если контенту не хватает места */
+  padding: 16px 12px;
+  border-right: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-brand {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  padding: 0 8px 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* Срабатывает только при наведении мышью — то, чего не может style={{}}. */
+.nav-item:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* Этот класс добавляется через JS условно — см. App.jsx (screen === item.id) */
+.nav-item-active {
+  background: var(--color-accent-100);
+  color: var(--color-accent-800);
+  font-weight: 600;
+}
+
+/* Без этого правила наведение мышью на АКТИВНЫЙ пункт перебивало бы его
+   подсветку серым цветом из .nav-item:hover — у него выше специфичность
+   (класс + псевдокласс), чем у одного .nav-item-active. Здесь та же
+   специфичность, что у .nav-item:hover, но правило объявлено ниже —
+   при равной специфичности побеждает то, что ниже в файле. */
+.nav-item-active:hover {
+  background: var(--color-accent-100);
+}
+
+.content {
+  flex: 1;
+  min-width: 0; /* чтобы широкие таблицы внутри не распирали layout */
+  padding: 24px 28px;
+}

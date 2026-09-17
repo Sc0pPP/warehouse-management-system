@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./App.css";
 import { Products } from "./pages/Products.jsx";
 import { References } from "./pages/References.jsx";
 import { Warehouses } from "./pages/Warehouses.jsx";
@@ -17,35 +18,28 @@ function App() {
   const [screen, setScreen] = useState("products");
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "sans-serif" }}>
+    <div className="app-shell">
       {/* Левая колонка — навигация */}
-      <nav style={{ width: 200, flexShrink: 0, borderRight: "1px solid #ccc", padding: 16 }}>
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setScreen(item.id)}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              padding: 8,
-              marginBottom: 4,
-              border: "none",
-              cursor: "pointer",
-              // Подсвечиваем кнопку текущего экрана — сравниваем её id с тем,
-              // что сейчас лежит в state screen.
-              background: screen === item.id ? "#e0e0e0" : "transparent",
-              fontWeight: screen === item.id ? 600 : 400,
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
+      <nav className="sidebar">
+        <div className="sidebar-brand">СКЛАД · WMS</div>
+        {NAV_ITEMS.map((item) => {
+          const isActive = screen === item.id;
+          // Собираем строку классов вручную: базовый класс всегда есть,
+          // класс "активности" добавляется только для текущего экрана.
+          // Шаблонная строка с условием (isActive ? "..." : "") —
+          // самый простой способ сделать это без отдельной библиотеки.
+          const className = `nav-item${isActive ? " nav-item-active" : ""}`;
+          return (
+            <button key={item.id} className={className} onClick={() => setScreen(item.id)}>
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Правая часть — здесь рисуется тот компонент-страница, который выбран.
           Одновременно показывается только один: остальные условия — false. */}
-      <main style={{ flex: 1, padding: 24 }}>
+      <main className="content">
         {screen === "products" && <Products />}
         {screen === "warehouses" && <Warehouses />}
         {screen === "references" && <References />}

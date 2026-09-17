@@ -1,5 +1,11 @@
+/* Дизайн-система из мокапов: шрифты (Barlow/Barlow Condensed), цвета,
+   готовые классы вроде .btn/.card/.tag. Смотри design/ds/styles.css — это
+   его копия, синхронизировать вручную, если оригинал поменяется. */
+@import "./styles/design-system.css";
+
 body {
   margin: 0;
-  background: #ffffff;
-  color: #111111;
+  /* --color-bg и --color-text определены в design-system.css */
+  background: var(--color-bg);
+  color: var(--color-text);
 }
