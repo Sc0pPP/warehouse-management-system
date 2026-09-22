@@ -5,13 +5,22 @@ import { References } from "./pages/References.jsx";
 import { Warehouses } from "./pages/Warehouses.jsx";
 import { Counterparties } from "./pages/Counterparties.jsx";
 
-// Список пунктов меню слева: id — внутреннее имя экрана (используем в коде),
-// label — то, что видит пользователь на кнопке.
-const NAV_ITEMS = [
-  { id: "products", label: "Номенклатура" },
-  { id: "warehouses", label: "Склады" },
-  { id: "counterparties", label: "Контрагенты" },
-  { id: "references", label: "Справочники" },
+// Пункты меню, сгруппированные по разделам — как в мокапах (там группы
+// "РАБОЧИЙ СТОЛ" / "ОПЕРАЦИИ" / "ЗАПАСЫ" и т.д.). Группируем только то,
+// что реально есть — никаких пустых разделов под ещё не built экраны.
+const NAV_GROUPS = [
+  {
+    title: "ЗАПАСЫ",
+    items: [
+      { id: "products", label: "Номенклатура" },
+      { id: "warehouses", label: "Склады" },
+      { id: "counterparties", label: "Контрагенты" },
+    ],
+  },
+  {
+    title: "СПРАВОЧНИКИ",
+    items: [{ id: "references", label: "Справочники" }],
+  },
 ];
 
 function App() {
@@ -24,19 +33,23 @@ function App() {
       {/* Левая колонка — навигация */}
       <nav className="sidebar">
         <div className="sidebar-brand">СКЛАД · WMS</div>
-        {NAV_ITEMS.map((item) => {
-          const isActive = screen === item.id;
-          // Собираем строку классов вручную: базовый класс всегда есть,
-          // класс "активности" добавляется только для текущего экрана.
-          // Шаблонная строка с условием (isActive ? "..." : "") —
-          // самый простой способ сделать это без отдельной библиотеки.
-          const className = `nav-item${isActive ? " nav-item-active" : ""}`;
-          return (
-            <button key={item.id} className={className} onClick={() => setScreen(item.id)}>
-              {item.label}
-            </button>
-          );
-        })}
+        {/* Внешний .map — по группам, внутренний — по пунктам внутри группы.
+            Два вложенных .map почти всегда означают "двумерный" список:
+            группы содержат массивы, а не сами являются пунктами меню. */}
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title} className="sidebar-group">
+            <div className="sidebar-group-title">{group.title}</div>
+            {group.items.map((item) => {
+              const isActive = screen === item.id;
+              const className = `nav-item${isActive ? " nav-item-active" : ""}`;
+              return (
+                <button key={item.id} className={className} onClick={() => setScreen(item.id)}>
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Правая часть — здесь рисуется тот компонент-страница, который выбран.
