@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Warehouses.css";
+import { authHeaders } from "../auth.js";
 
 const API_BASE = "http://localhost:5034/api";
 
@@ -20,7 +21,7 @@ export function Warehouses() {
   useEffect(() => {
     async function loadWarehouses() {
       try {
-        const response = await fetch(`${API_BASE}/warehouses`);
+        const response = await fetch(`${API_BASE}/warehouses`, { headers: authHeaders() });
         if (!response.ok) {
           throw new Error(`Ошибка сервера: ${response.status}`);
         }
@@ -45,7 +46,7 @@ export function Warehouses() {
     try {
       const response = await fetch(`${API_BASE}/warehouses`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(form),
       });
       if (!response.ok) {
@@ -63,7 +64,7 @@ export function Warehouses() {
   // Логика один в один как handleDelete в Products.jsx.
   async function handleDelete(id) {
     try {
-      const response = await fetch(`${API_BASE}/warehouses/${id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}/warehouses/${id}`, { method: "DELETE", headers: authHeaders() });
       if (!response.ok) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "../auth.js";
 
 const API_BASE = "http://localhost:5034/api";
 
@@ -17,11 +18,12 @@ export function References() {
       try {
         // Promise.all отправляет все 4 запроса СРАЗУ, параллельно, а не по очереди —
         // ждём столько же, сколько заняла бы самая медленная из четырёх, а не сумму всех.
+        const headers = authHeaders();
         const [rolesRes, typesRes, docTypesRes, categoriesRes] = await Promise.all([
-          fetch(`${API_BASE}/roles`),
-          fetch(`${API_BASE}/counterparty-types`),
-          fetch(`${API_BASE}/document-types`),
-          fetch(`${API_BASE}/categories`),
+          fetch(`${API_BASE}/roles`, { headers }),
+          fetch(`${API_BASE}/counterparty-types`, { headers }),
+          fetch(`${API_BASE}/document-types`, { headers }),
+          fetch(`${API_BASE}/categories`, { headers }),
         ]);
         if (!rolesRes.ok || !typesRes.ok || !docTypesRes.ok || !categoriesRes.ok) {
           throw new Error("Ошибка сервера при загрузке справочников");

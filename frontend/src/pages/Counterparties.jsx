@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authHeaders } from "../auth.js";
 
 const API_BASE = "http://localhost:5034/api";
 
@@ -22,7 +23,7 @@ export function Counterparties() {
   useEffect(() => {
     async function loadCounterparties() {
       try {
-        const response = await fetch(`${API_BASE}/counterparties`);
+        const response = await fetch(`${API_BASE}/counterparties`, { headers: authHeaders() });
         if (!response.ok) {
           throw new Error(`Ошибка сервера: ${response.status}`);
         }
@@ -49,7 +50,7 @@ export function Counterparties() {
     try {
       const response = await fetch(`${API_BASE}/counterparties`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(form),
       });
       if (!response.ok) {
@@ -65,7 +66,7 @@ export function Counterparties() {
 
   async function handleDelete(id) {
     try {
-      const response = await fetch(`${API_BASE}/counterparties/${id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}/counterparties/${id}`, { method: "DELETE", headers: authHeaders() });
       if (!response.ok) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }

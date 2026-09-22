@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./Products.css";
+import { authHeaders } from "../auth.js";
 
 // Адрес бэкенда. Пока просто копируем эту строку в каждый файл-страницу;
 // когда таких файлов станет много, вынесем в отдельный api.js, чтобы менять
@@ -32,7 +33,7 @@ export function Products() {
   useEffect(() => {
     async function loadProducts() {
       try {
-        const response = await fetch(API_BASE + "/products");
+        const response = await fetch(API_BASE + "/products", { headers: authHeaders() });
         if (!response.ok) {
           throw new Error(`Ошибка сервера: ${response.status}`);
         }
@@ -63,7 +64,10 @@ export function Products() {
     try {
       const response = await fetch(`${API_BASE}/products`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        // Спред-оператор внутри объекта: раскладывает пары ключ-значение из
+        // authHeaders() (либо { Authorization: "Bearer ..." }, либо пусто)
+        // прямо сюда, рядом с Content-Type.
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(form),
       });
       if (!response.ok) {
@@ -80,7 +84,7 @@ export function Products() {
   // товар из локального списка по id (без похода на сервер за всем списком).
   async function handleDelete(id) {
     try {
-      const response = await fetch(`${API_BASE}/products/${id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}/products/${id}`, { method: "DELETE", headers: authHeaders() });
       if (!response.ok) {
         throw new Error(`Ошибка сервера: ${response.status}`);
       }

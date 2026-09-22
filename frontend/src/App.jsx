@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./App.css";
+import { getStoredUser, clearSession } from "./auth.js";
+import { Login } from "./pages/Login.jsx";
 import { Products } from "./pages/Products.jsx";
 import { References } from "./pages/References.jsx";
 import { Warehouses } from "./pages/Warehouses.jsx";
@@ -24,9 +26,25 @@ const NAV_GROUPS = [
 ];
 
 function App() {
-  // Какой экран сейчас открыт. Меняется по клику на пункт меню —
-  // это единственное, что связывает сайдбар с содержимым справа.
+  // useState(() => getStoredUser()) — функция вместо готового значения.
+  // React вызовет её только ОДИН раз, при самом первом рендере компонента.
+  // Если написать просто useState(getStoredUser()) — getStoredUser()
+  // вызывался бы на КАЖДОМ рендере (хоть и использовался бы только
+  // первый результат) — лишнее чтение localStorage без всякой пользы.
+  const [currentUser, setCurrentUser] = useState(() => getStoredUser());
   const [screen, setScreen] = useState("products");
+
+  // Пока не залогинены — вообще не показываем сайдбар и страницы,
+  // только форму входа. onLoginSuccess === setCurrentUser: как только
+  // Login.jsx получит пользователя от сервера, он попадёт прямо в state.
+  if (!currentUser) {
+    return <Login onLoginSuccess={setCurrentUser} />;
+  }
+
+  function handleLogout() {
+    clearSession();
+    setCurrentUser(null);
+  }
 
   return (
     <div className="app-shell">
@@ -50,6 +68,16 @@ function App() {
             })}
           </div>
         ))}
+
+        {/* marginTop: "auto" внутри flex-column-контейнера прижимает этот
+            блок к самому низу сайдбара, сколько бы места ни осталось. */}
+        <div style={{ marginTop: "auto", paddingTop: 12, borderTop: "1px solid var(--color-divider)" }}>
+          <div style={{ fontSize: 13, fontWeight: 500 }}>{currentUser.fullName}</div>
+          <div className="text-muted" style={{ fontSize: 11, marginBottom: 8 }}>{currentUser.role}</div>
+          <button className="btn btn-secondary" style={{ width: "100%" }} onClick={handleLogout}>
+            Выйти
+          </button>
+        </div>
       </nav>
 
       {/* Правая часть — здесь рисуется тот компонент-страница, который выбран.
