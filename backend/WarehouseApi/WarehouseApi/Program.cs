@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -101,21 +102,54 @@ app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context
     });
 });
 
+// --- Изоляция по складам ---
+// У Директора/сотрудника в токене есть claim "warehouseId" — их всегда
+// принудительно скопим на этот склад, игнорируя то, что прислал клиент
+// (иначе сотрудник склада 1 мог бы подставить warehouseId склада 2 и
+// украсть/испортить чужие данные). У Админа claim'а нет вообще — он должен
+// явно указать warehouseId параметром запроса, иначе непонятно, с каким
+// складом он работает.
+static (int? warehouseId, IResult? error) ResolveWarehouseId(ClaimsPrincipal user, int? requestedWarehouseId)
+{
+    if (user.IsInRole("Админ"))
+    {
+        return requestedWarehouseId is null
+            ? (null, Results.BadRequest("Укажите warehouseId (вы — Админ, у вас нет своего склада)."))
+            : (requestedWarehouseId, null);
+    }
+
+    var claim = user.FindFirst("warehouseId");
+    return claim is null
+        ? (null, Results.Forbid())
+        : (int.Parse(claim.Value), null);
+}
+
 //Products
-app.MapGet("/api/products", (WarehouseDbContext context)=>{
-    return context.Products.ToList();
+app.MapGet("/api/products", (int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    return Results.Ok(context.Products.Where(p => p.WarehouseId == whId).ToList());
 }).RequireAuthorization();
 
-app.MapGet("/api/products/{id}", (int id, WarehouseDbContext context) =>
+app.MapGet("/api/products/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-return context.Products.FirstOrDefault(x => x.Id == id);
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
 
+    var product = context.Products.FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
+    return product is null ? Results.NotFound() : Results.Ok(product);
 }).RequireAuthorization();
 
-app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext context) =>
+app.MapPost("/api/products", (CreateProductRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
+    var (whId, error) = ResolveWarehouseId(user, request.WarehouseId);
+    if (error is not null) return error;
+
     var product = new Product
     {
+        WarehouseId = whId!.Value,
         Sku = request.Sku,
         Name = request.Name,
         CategoryId = request.CategoryId,
@@ -132,10 +166,12 @@ app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext co
     return Results.Created($"/api/products/{product.Id}", product);
 }).RequireAuthorization();
 
-app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, WarehouseDbContext context) =>
+app.MapPatch("/api/products/{id}", (int id, int? warehouseId, UpdateProductRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    
-    var product = context.Products.Find(id);
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    var product = context.Products.FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
     if (product is null) return Results.NotFound();
 
     if (request.Name is not null) product.Name = request.Name;
@@ -147,9 +183,12 @@ app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, Wareho
     return Results.Ok(product);
 }).RequireAuthorization();
 
-app.MapDelete( "/api/products/{id}" ,(int id,WarehouseDbContext context)=>{
+app.MapDelete("/api/products/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
 
-    context.Products.RemoveRange(context.Products.Where(x => x.Id == id));
+    context.Products.RemoveRange(context.Products.Where(x => x.Id == id && x.WarehouseId == whId));
     context.SaveChanges();
     return Results.NoContent();
 }).RequireAuthorization();
@@ -170,44 +209,56 @@ app.MapGet("/api/document-types", (WarehouseDbContext context) =>
     return(context.DocumentTypes.ToList());
 }).RequireAuthorization();
 
-app.MapGet("/api/categories", (WarehouseDbContext context) =>
+app.MapGet("/api/categories", (int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    return (context.Categories.ToList());
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    return Results.Ok(context.Categories.Where(c => c.WarehouseId == whId).ToList());
 }).RequireAuthorization();
 
-app.MapPost("/api/categories", (CreateCategoryRequest request, WarehouseDbContext context) =>
+app.MapPost("/api/categories", (CreateCategoryRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    var сategory = new Category
+    var (whId, error) = ResolveWarehouseId(user, request.WarehouseId);
+    if (error is not null) return error;
+
+    var category = new Category
     {
+        WarehouseId = whId!.Value,
         Name = request.Name
     };
-    context.Categories.Add(сategory);
+    context.Categories.Add(category);
     context.SaveChanges();
-    return Results.Created($"/api/categories/{сategory.Id}", сategory);
+    return Results.Created($"/api/categories/{category.Id}", category);
 }).RequireAuthorization();
 
-app.MapPatch("/api/categories/{id}", (int id, UpdateCategoryRequest request, WarehouseDbContext context) =>
+app.MapPatch("/api/categories/{id}", (int id, int? warehouseId, UpdateCategoryRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-var category = context.Categories.Find(id);
-if(category is null) return Results.NotFound();
-if(request.Name is not null) category.Name=request.Name;
-context.SaveChanges();
-return Results.Ok(category);
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    var category = context.Categories.FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
+    if (category is null) return Results.NotFound();
+    if (request.Name is not null) category.Name = request.Name;
+    context.SaveChanges();
+    return Results.Ok(category);
 }).RequireAuthorization();
 
-app.MapDelete("/api/categories/{id}", (int id, WarehouseDbContext context) =>
+app.MapDelete("/api/categories/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    context.Categories.RemoveRange(context.Categories.Where(x => x.Id == id));
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    context.Categories.RemoveRange(context.Categories.Where(x => x.Id == id && x.WarehouseId == whId));
     context.SaveChanges();
     return Results.NoContent();
 }).RequireAuthorization();
 
-//Warehouses and Stock
-
+//Warehouses — управляют только Админ (сами склады, а не их содержимое)
 app.MapGet("/api/warehouses", (WarehouseDbContext context) =>
 {
     return context.Warehouses.ToList();
-}).RequireAuthorization();
+}).RequireAuthorization(policy => policy.RequireRole("Админ"));
 
 app.MapPost("/api/warehouses", (CreateWarehouseRequest request, WarehouseDbContext context) =>
 {
@@ -219,7 +270,7 @@ app.MapPost("/api/warehouses", (CreateWarehouseRequest request, WarehouseDbConte
     context.Warehouses.Add(warehouse);
     context.SaveChanges();
     return Results.Created($"/api/warehouses/{warehouse.Id}", warehouse);
-}).RequireAuthorization();
+}).RequireAuthorization(policy => policy.RequireRole("Админ"));
 app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, WarehouseDbContext context) =>
 {
     var warehouse = context.Warehouses.Find(id);
@@ -228,7 +279,7 @@ app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, Wa
     if(request.Address is not null) warehouse.Address=request.Address;
     context.SaveChanges();
     return Results.Ok(warehouse);
-}).RequireAuthorization();
+}).RequireAuthorization(policy => policy.RequireRole("Админ"));
 
 app.MapDelete("/api/warehouses/{id}", (int id, WarehouseDbContext context) =>
 {
@@ -236,17 +287,19 @@ app.MapDelete("/api/warehouses/{id}", (int id, WarehouseDbContext context) =>
     context.SaveChanges();
     return Results.NoContent();
 
-}).RequireAuthorization();
+}).RequireAuthorization(policy => policy.RequireRole("Админ"));
 
-app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock, WarehouseDbContext context) =>
+//Stock — только просмотр остатков своего склада (изменения остатков будут через документы)
+app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
     var query = context.Stocks
         .Include(s => s.Product)
         .Include(s => s.Warehouse)
+        .Where(s => s.WarehouseId == whId)
         .AsQueryable();
-
-    if (warehouseId is not null)
-        query = query.Where(s => s.WarehouseId == warehouseId);
 
     if (productId is not null)
         query = query.Where(s => s.ProductId == productId);
@@ -265,14 +318,16 @@ app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock,
         MinStockLevel = s.Product.MinStockLevel
     });
 
-    return result.ToList();
+    return Results.Ok(result.ToList());
 }).RequireAuthorization();
 
 //Counterparties
-app.MapGet("/api/counterparties", (int? typeid,WarehouseDbContext context) =>
+app.MapGet("/api/counterparties", (int? typeid, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
 
-    var query = context.Counterparties.AsQueryable();
+    var query = context.Counterparties.Where(c => c.WarehouseId == whId).AsQueryable();
     if (typeid is not null)
     {
         query = query.Where(u => u.TypeId == typeid).AsQueryable();
@@ -288,20 +343,26 @@ app.MapGet("/api/counterparties", (int? typeid,WarehouseDbContext context) =>
             s.Phone
         }
     );
-    return result.ToList();
+    return Results.Ok(result.ToList());
 }).RequireAuthorization();
 
-app.MapGet("/api/counterparties/{id}", (int? id, WarehouseDbContext context) =>
+app.MapGet("/api/counterparties/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    var counterparty = context.Counterparties.Find(id);
-    if (counterparty is null) return Results.NotFound();
-    return Results.Ok(counterparty);
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    var counterparty = context.Counterparties.FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
+    return counterparty is null ? Results.NotFound() : Results.Ok(counterparty);
 }).RequireAuthorization();
 
-app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, WarehouseDbContext context) =>
+app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
+    var (whId, error) = ResolveWarehouseId(user, request.WarehouseId);
+    if (error is not null) return error;
+
     Counterparty counterparty = new Counterparty()
     {
+        WarehouseId = whId!.Value,
         TypeId = request.TypeId,
         Name = request.Name,
         Email = request.Email,
@@ -312,22 +373,28 @@ app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, Warehou
     context.SaveChanges();
     return Results.Created($"/api/counterparties/{counterparty.Id}", counterparty);
 }).RequireAuthorization();
-app.MapPatch("/api/counterparties/{id}", (int id, UpdateCounetrpartiesRequest request, WarehouseDbContext context) =>
+app.MapPatch("/api/counterparties/{id}", (int id, int? warehouseId, UpdateCounetrpartiesRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    Counterparty counterparty = context.Counterparties.Find(id);
-    if(counterparty is null) return Results.NotFound();
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    var counterparty = context.Counterparties.FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
+    if (counterparty is null) return Results.NotFound();
     if (request.Name is not null) counterparty.Name = request.Name;
-    if(request.Email is not null) counterparty.Email = request.Email;
-    if(request.Phone is not null) counterparty.Phone = request.Phone;
-    if(request.Address is not null) counterparty.Address = request.Address;
+    if (request.Email is not null) counterparty.Email = request.Email;
+    if (request.Phone is not null) counterparty.Phone = request.Phone;
+    if (request.Address is not null) counterparty.Address = request.Address;
     context.SaveChanges();
     return Results.Ok(counterparty);
 }).RequireAuthorization();
 
-app.MapDelete("/api/counterparties/{id}", (int id, WarehouseDbContext context) =>
+app.MapDelete("/api/counterparties/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
-    context.Counterparties.RemoveRange(context.Counterparties.Where(x => x.Id == id));
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+
+    context.Counterparties.RemoveRange(context.Counterparties.Where(x => x.Id == id && x.WarehouseId == whId));
     context.SaveChanges();
-    return Results.Ok();
+    return Results.NoContent();
 }).RequireAuthorization();
 app.Run();

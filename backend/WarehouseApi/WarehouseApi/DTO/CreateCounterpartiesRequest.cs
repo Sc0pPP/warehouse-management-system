@@ -5,5 +5,6 @@ public record CreateCounterpartiesRequest(
     string Name,
     string Phone,
     string Email,
-    string Address
+    string Address,
+    int? WarehouseId = null
     );
