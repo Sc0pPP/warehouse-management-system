@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./Warehouses.css";
 
 const API_BASE = "http://localhost:5034/api";
 
@@ -34,9 +35,6 @@ export function Warehouses() {
     loadWarehouses();
   }, []);
 
-  // Тот же общий обработчик полей формы, что и в Products.jsx.
-  // Тут нет чекбоксов, поэтому type/checked не используются, но оставляем
-  // их в деструктуризации — так обработчик универсален, если поля добавятся.
   function handleFormChange(e) {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
@@ -55,8 +53,21 @@ export function Warehouses() {
       }
       const created = await response.json();
       setWarehouses((prev) => [...prev, created]);
-      // Очищаем форму после успешного создания, чтобы не пришлось стирать руками.
       setForm({ name: "", address: "" });
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  // Новое: бэк теперь умеет DELETE /api/warehouses/{id}, добавляем кнопку.
+  // Логика один в один как handleDelete в Products.jsx.
+  async function handleDelete(id) {
+    try {
+      const response = await fetch(`${API_BASE}/warehouses/${id}`, { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера: ${response.status}`);
+      }
+      setWarehouses((prev) => prev.filter((w) => w.id !== id));
     } catch (err) {
       setError(err.message);
     }
@@ -64,40 +75,58 @@ export function Warehouses() {
 
   return (
     <div>
-      <h1>Склады</h1>
+      <div className="page-head">
+        <div className="page-kicker">СКЛАДЫ</div>
+        <h1>Склады</h1>
+        <div className="page-subtitle">{warehouses.length} складов</div>
+      </div>
 
-      <section style={{ marginBottom: 32 }}>
-        <h2>Добавить склад</h2>
-        <form onSubmit={handleCreate} style={{ display: "grid", gap: 8, maxWidth: 360 }}>
-          <input name="name" placeholder="Название" value={form.name} onChange={handleFormChange} />
-          <input name="address" placeholder="Адрес" value={form.address} onChange={handleFormChange} />
-          <button type="submit">Создать</button>
+      <div className="card form-card">
+        <h5>Добавить склад</h5>
+        <form onSubmit={handleCreate} className="form-grid">
+          <div className="field">
+            <label>Название</label>
+            <input className="input" name="name" value={form.name} onChange={handleFormChange} />
+          </div>
+          <div className="field">
+            <label>Адрес</label>
+            <input className="input" name="address" value={form.address} onChange={handleFormChange} />
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="btn btn-primary">
+              Создать
+            </button>
+          </div>
         </form>
-      </section>
+      </div>
 
-      <section>
-        <h2>Список складов</h2>
-        {error && <p style={{ color: "red" }}>Ошибка: {error}</p>}
-        {loading && !error && <p>Загрузка...</p>}
-        {!loading && !error && (
-          <table cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>
-                <th>Название</th>
-                <th>Адрес</th>
+      <h5>Список складов</h5>
+      {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
+      {loading && !error && <p className="text-muted">Загрузка...</p>}
+      {!loading && !error && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Адрес</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {warehouses.map((w) => (
+              <tr key={w.id}>
+                <td>{w.name}</td>
+                <td className="text-muted">{w.address}</td>
+                <td>
+                  <button className="btn btn-secondary" onClick={() => handleDelete(w.id)}>
+                    Удалить
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {warehouses.map((w) => (
-                <tr key={w.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td>{w.name}</td>
-                  <td>{w.address}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

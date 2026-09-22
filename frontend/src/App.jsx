@@ -3,12 +3,14 @@ import "./App.css";
 import { Products } from "./pages/Products.jsx";
 import { References } from "./pages/References.jsx";
 import { Warehouses } from "./pages/Warehouses.jsx";
+import { Counterparties } from "./pages/Counterparties.jsx";
 
 // Список пунктов меню слева: id — внутреннее имя экрана (используем в коде),
 // label — то, что видит пользователь на кнопке.
 const NAV_ITEMS = [
   { id: "products", label: "Номенклатура" },
   { id: "warehouses", label: "Склады" },
+  { id: "counterparties", label: "Контрагенты" },
   { id: "references", label: "Справочники" },
 ];
 
@@ -42,6 +44,7 @@ function App() {
       <main className="content">
         {screen === "products" && <Products />}
         {screen === "warehouses" && <Warehouses />}
+        {screen === "counterparties" && <Counterparties />}
         {screen === "references" && <References />}
       </main>
     </div>

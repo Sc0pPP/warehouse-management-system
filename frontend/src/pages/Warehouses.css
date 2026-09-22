@@ -1,0 +1,40 @@
+/* Те же классы-компоненты, что и в Products.css — .card/.field/.input и т.п.
+   берутся из design-system.css, тут только раскладка формы под эту страницу. */
+
+.page-head {
+  margin-bottom: var(--space-6);
+}
+
+/* Эти два класса дублируют то, что уже есть в Products.css — сейчас страницы
+   стилизуются по отдельности, поэтому пока просто копируем. Если увидим,
+   что общих кусков набирается много — вынесем в один общий файл (например,
+   common.css), но делать это заранее, "на будущее", не стали. */
+.page-kicker {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--color-accent-700);
+  text-transform: uppercase;
+}
+
+.page-subtitle {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.form-card {
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+  max-width: 360px;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-actions {
+  margin-top: var(--space-2);
+}
