@@ -64,7 +64,7 @@ INSERT INTO counterparties (type_id, name, phone, email, address) VALUES
 
 -- Пользователи (пароли выставляет бэкенд при регистрации — здесь заглушка-хэш)
 INSERT INTO users (username, password_hash, full_name, role_id, is_active) VALUES
-    ('a.kovalev', '$2a$12$placeholderplaceholderplaceholde', 'А. Ковалёв',    1, TRUE),
+    ('a.kovalev', '$2y$12$AD4an.aBawpid.1SXOwDVOYpXrvvpaX7ObS.z1YN5ZK5LCrILFGry', 'А. Ковалёв',    1, TRUE), -- пароль: password123
     ('i.demin',   '$2a$12$placeholderplaceholderplaceholde', 'И. Дёмин',      2, TRUE),
     ('m.sotnikova','$2a$12$placeholderplaceholderplaceholde','М. Сотникова',  2, TRUE),
     ('p.orlov',   '$2a$12$placeholderplaceholderplaceholde', 'П. Орлов',      3, TRUE),

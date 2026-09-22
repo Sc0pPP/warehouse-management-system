@@ -1,4 +1,9 @@
+using System.Security.Claims;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using WarehouseApi.Data;
 using WarehouseApi.DTO;
 using WarehouseApi.Models;
@@ -8,6 +13,22 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<WarehouseDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -16,20 +37,59 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 app.UseCors("AllowFrontend");
+app.UseAuthentication();  // сначала: кто ты?
+app.UseAuthorization();   // потом: что тебе разрешено?
 
+
+//Auth
+// Единственный публичный эндпоинт — тут пока нет токена, поэтому и
+// .RequireAuthorization() на нём быть не может: иначе не выдать сам токен.
+app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
+{
+    var user = context.Users.Include(u => u.Role)
+        .FirstOrDefault(u => u.Username == request.Username);
+
+    if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+    {
+        return Results.Unauthorized();
+    }
+
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role.Name),
+    };
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var token = new JwtSecurityToken(
+        issuer: builder.Configuration["Jwt:Issuer"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(8),
+        signingCredentials: creds);
+
+    return Results.Ok(new
+    {
+        token = new JwtSecurityTokenHandler().WriteToken(token),
+        user = new { user.Id, user.Username, user.FullName, role = user.Role.Name }
+    });
+});
 
 //Products
 app.MapGet("/api/products", (WarehouseDbContext context)=>{
     return context.Products.ToList();
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/products/{id}", (int id, WarehouseDbContext context) =>
 {
 return context.Products.FirstOrDefault(x => x.Id == id);
 
-});
+}).RequireAuthorization();
 
 app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext context) =>
 {
@@ -49,7 +109,7 @@ app.MapPost("/api/products", (CreateProductRequest request,WarehouseDbContext co
     context.SaveChanges();
 
     return Results.Created($"/api/products/{product.Id}", product);
-});
+}).RequireAuthorization();
 
 app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, WarehouseDbContext context) =>
 {
@@ -64,35 +124,35 @@ app.MapPatch("/api/products/{id}", (int id, UpdateProductRequest request, Wareho
 
     context.SaveChanges();
     return Results.Ok(product);
-});
+}).RequireAuthorization();
 
 app.MapDelete( "/api/products/{id}" ,(int id,WarehouseDbContext context)=>{
 
     context.Products.RemoveRange(context.Products.Where(x => x.Id == id));
-    context.SaveChanges();  
+    context.SaveChanges();
     return Results.NoContent();
-});
+}).RequireAuthorization();
 
 //Reference
 app.MapGet("/api/roles", (WarehouseDbContext context) =>
 {
  return(context.Roles.ToList());
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/counterparty-types", (WarehouseDbContext context) =>
 {
 return(context.CounterpartyTypes.ToList());
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/document-types", (WarehouseDbContext context) =>
 {
     return(context.DocumentTypes.ToList());
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/categories", (WarehouseDbContext context) =>
 {
     return (context.Categories.ToList());
-});
+}).RequireAuthorization();
 
 app.MapPost("/api/categories", (CreateCategoryRequest request, WarehouseDbContext context) =>
 {
@@ -103,7 +163,7 @@ app.MapPost("/api/categories", (CreateCategoryRequest request, WarehouseDbContex
     context.Categories.Add(сategory);
     context.SaveChanges();
     return Results.Created($"/api/categories/{сategory.Id}", сategory);
-});
+}).RequireAuthorization();
 
 app.MapPatch("/api/categories/{id}", (int id, UpdateCategoryRequest request, WarehouseDbContext context) =>
 {
@@ -112,21 +172,21 @@ if(category is null) return Results.NotFound();
 if(request.Name is not null) category.Name=request.Name;
 context.SaveChanges();
 return Results.Ok(category);
-});
+}).RequireAuthorization();
 
 app.MapDelete("/api/categories/{id}", (int id, WarehouseDbContext context) =>
 {
     context.Categories.RemoveRange(context.Categories.Where(x => x.Id == id));
     context.SaveChanges();
     return Results.NoContent();
-});
+}).RequireAuthorization();
 
 //Warehouses and Stock
 
 app.MapGet("/api/warehouses", (WarehouseDbContext context) =>
 {
     return context.Warehouses.ToList();
-});
+}).RequireAuthorization();
 
 app.MapPost("/api/warehouses", (CreateWarehouseRequest request, WarehouseDbContext context) =>
 {
@@ -138,7 +198,7 @@ app.MapPost("/api/warehouses", (CreateWarehouseRequest request, WarehouseDbConte
     context.Warehouses.Add(warehouse);
     context.SaveChanges();
     return Results.Created($"/api/warehouses/{warehouse.Id}", warehouse);
-});
+}).RequireAuthorization();
 app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, WarehouseDbContext context) =>
 {
     var warehouse = context.Warehouses.Find(id);
@@ -147,15 +207,15 @@ app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, Wa
     if(request.Address is not null) warehouse.Address=request.Address;
     context.SaveChanges();
     return Results.Ok(warehouse);
-});
+}).RequireAuthorization();
 
 app.MapDelete("/api/warehouses/{id}", (int id, WarehouseDbContext context) =>
 {
     context.Warehouses.RemoveRange(context.Warehouses.Where(x => x.Id == id));
     context.SaveChanges();
     return Results.NoContent();
-    
-});
+
+}).RequireAuthorization();
 
 app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock, WarehouseDbContext context) =>
 {
@@ -185,7 +245,7 @@ app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock,
     });
 
     return result.ToList();
-});
+}).RequireAuthorization();
 
 //Counterparties
 app.MapGet("/api/counterparties", (int? typeid,WarehouseDbContext context) =>
@@ -208,14 +268,14 @@ app.MapGet("/api/counterparties", (int? typeid,WarehouseDbContext context) =>
         }
     );
     return result.ToList();
-});
+}).RequireAuthorization();
 
 app.MapGet("/api/counterparties/{id}", (int? id, WarehouseDbContext context) =>
 {
     var counterparty = context.Counterparties.Find(id);
     if (counterparty is null) return Results.NotFound();
     return Results.Ok(counterparty);
-});
+}).RequireAuthorization();
 
 app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, WarehouseDbContext context) =>
 {
@@ -230,7 +290,7 @@ app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, Warehou
     context.Counterparties.Add(counterparty);
     context.SaveChanges();
     return Results.Created($"/api/counterparties/{counterparty.Id}", counterparty);
-});
+}).RequireAuthorization();
 app.MapPatch("/api/counterparties/{id}", (int id, UpdateCounetrpartiesRequest request, WarehouseDbContext context) =>
 {
     Counterparty counterparty = context.Counterparties.Find(id);
@@ -241,12 +301,12 @@ app.MapPatch("/api/counterparties/{id}", (int id, UpdateCounetrpartiesRequest re
     if(request.Address is not null) counterparty.Address = request.Address;
     context.SaveChanges();
     return Results.Ok(counterparty);
-});
+}).RequireAuthorization();
 
 app.MapDelete("/api/counterparties/{id}", (int id, WarehouseDbContext context) =>
 {
     context.Counterparties.RemoveRange(context.Counterparties.Where(x => x.Id == id));
     context.SaveChanges();
     return Results.Ok();
-});
+}).RequireAuthorization();
 app.Run();
