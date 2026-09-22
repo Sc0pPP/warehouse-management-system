@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -6,7 +6,6 @@ namespace WarehouseApi.Models;
 
 public partial class CounterpartyType
 {
-    
     public int Id { get; set; }
 
     public string Name { get; set; } = null!;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -6,8 +6,9 @@ namespace WarehouseApi.Models;
 
 public partial class Counterparty
 {
-   
     public int Id { get; set; }
+
+    public int WarehouseId { get; set; }
 
     public int TypeId { get; set; }
 
@@ -24,4 +25,7 @@ public partial class Counterparty
 
     [JsonIgnore]
     public virtual CounterpartyType Type { get; set; } = null!;
+
+    [JsonIgnore]
+    public virtual Warehouse Warehouse { get; set; } = null!;
 }

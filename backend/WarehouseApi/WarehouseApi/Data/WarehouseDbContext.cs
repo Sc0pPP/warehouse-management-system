@@ -42,12 +42,22 @@ public partial class WarehouseDbContext : DbContext
 
             entity.ToTable("categories");
 
-            entity.HasIndex(e => e.Name, "categories_name_key").IsUnique();
+            entity.HasIndex(e => new { e.WarehouseId, e.Id }, "categories_warehouse_id_id_key").IsUnique();
+
+            entity.HasIndex(e => new { e.WarehouseId, e.Name }, "categories_warehouse_id_name_key").IsUnique();
+
+            entity.HasIndex(e => e.WarehouseId, "idx_categories_warehouse");
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
             entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Categories)
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("categories_warehouse_id_fkey");
         });
 
         modelBuilder.Entity<Counterparty>(entity =>
@@ -55,6 +65,10 @@ public partial class WarehouseDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("counterparties_pkey");
 
             entity.ToTable("counterparties");
+
+            entity.HasIndex(e => new { e.WarehouseId, e.Id }, "counterparties_warehouse_id_id_key").IsUnique();
+
+            entity.HasIndex(e => e.WarehouseId, "idx_counterparties_warehouse");
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
@@ -64,11 +78,17 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.Name).HasColumnName("name");
             entity.Property(e => e.Phone).HasColumnName("phone");
             entity.Property(e => e.TypeId).HasColumnName("type_id");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
             entity.HasOne(d => d.Type).WithMany(p => p.Counterparties)
                 .HasForeignKey(d => d.TypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("counterparties_type_id_fkey");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Counterparties)
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("counterparties_warehouse_id_fkey");
         });
 
         modelBuilder.Entity<CounterpartyType>(entity =>
@@ -118,10 +138,6 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
-            entity.HasOne(d => d.Counterparty).WithMany(p => p.Documents)
-                .HasForeignKey(d => d.CounterpartyId)
-                .HasConstraintName("documents_counterparty_id_fkey");
-
             entity.HasOne(d => d.TargetWarehouse).WithMany(p => p.DocumentTargetWarehouses)
                 .HasForeignKey(d => d.TargetWarehouseId)
                 .HasConstraintName("documents_target_warehouse_id_fkey");
@@ -140,6 +156,11 @@ public partial class WarehouseDbContext : DbContext
                 .HasForeignKey(d => d.WarehouseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("documents_warehouse_id_fkey");
+
+            entity.HasOne(d => d.Counterparty).WithMany(p => p.Documents)
+                .HasPrincipalKey(p => new { p.WarehouseId, p.Id })
+                .HasForeignKey(d => new { d.WarehouseId, d.CounterpartyId })
+                .HasConstraintName("documents_warehouse_id_counterparty_id_fkey");
         });
 
         modelBuilder.Entity<DocumentItem>(entity =>
@@ -196,7 +217,11 @@ public partial class WarehouseDbContext : DbContext
 
             entity.HasIndex(e => e.CategoryId, "idx_products_category");
 
-            entity.HasIndex(e => e.Sku, "products_sku_key").IsUnique();
+            entity.HasIndex(e => e.WarehouseId, "idx_products_warehouse");
+
+            entity.HasIndex(e => new { e.WarehouseId, e.Id }, "products_warehouse_id_id_key").IsUnique();
+
+            entity.HasIndex(e => new { e.WarehouseId, e.Sku }, "products_warehouse_id_sku_key").IsUnique();
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
@@ -217,11 +242,18 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.Unit)
                 .HasDefaultValueSql("'шт'::text")
                 .HasColumnName("unit");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Products)
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("products_warehouse_id_fkey");
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
-                .HasForeignKey(d => d.CategoryId)
+                .HasPrincipalKey(p => new { p.WarehouseId, p.Id })
+                .HasForeignKey(d => new { d.WarehouseId, d.CategoryId })
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("products_category_id_fkey");
+                .HasConstraintName("products_warehouse_id_category_id_fkey");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -259,15 +291,16 @@ public partial class WarehouseDbContext : DbContext
                 .HasColumnName("quantity");
             entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
-            entity.HasOne(d => d.Product).WithMany(p => p.Stocks)
-                .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("stock_product_id_fkey");
-
             entity.HasOne(d => d.Warehouse).WithMany(p => p.Stocks)
                 .HasForeignKey(d => d.WarehouseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("stock_warehouse_id_fkey");
+
+            entity.HasOne(d => d.Product).WithMany(p => p.Stocks)
+                .HasPrincipalKey(p => new { p.WarehouseId, p.Id })
+                .HasForeignKey(d => new { d.WarehouseId, d.ProductId })
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("stock_warehouse_id_product_id_fkey");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -275,6 +308,8 @@ public partial class WarehouseDbContext : DbContext
             entity.HasKey(e => e.Id).HasName("users_pkey");
 
             entity.ToTable("users");
+
+            entity.HasIndex(e => e.WarehouseId, "idx_users_warehouse");
 
             entity.HasIndex(e => e.Username, "users_username_key").IsUnique();
 
@@ -288,11 +323,16 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.Username).HasColumnName("username");
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("users_role_id_fkey");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Users)
+                .HasForeignKey(d => d.WarehouseId)
+                .HasConstraintName("users_warehouse_id_fkey");
         });
 
         modelBuilder.Entity<Warehouse>(entity =>

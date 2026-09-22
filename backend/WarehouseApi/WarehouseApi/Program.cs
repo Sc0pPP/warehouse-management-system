@@ -50,20 +50,41 @@ app.UseAuthorization();   // потом: что тебе разрешено?
 // .RequireAuthorization() на нём быть не может: иначе не выдать сам токен.
 app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
 {
-    var user = context.Users.Include(u => u.Role)
-        .FirstOrDefault(u => u.Username == request.Username);
+    // Проекция через Select вместо полной сущности User — обходит баг
+    // материализации: EF Core 10 / Npgsql 10 на этой связке пытается
+    // прочитать nullable warehouse_id как обычный int при загрузке целой
+    // сущности (даже без Include), а через Select читает корректно.
+    var user = context.Users
+        .Where(u => u.Username == request.Username)
+        .Select(u => new
+        {
+            u.Id,
+            u.Username,
+            u.PasswordHash,
+            u.FullName,
+            u.IsActive,
+            u.WarehouseId,
+            RoleName = u.Role.Name
+        })
+        .FirstOrDefault();
 
     if (user is null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
     {
         return Results.Unauthorized();
     }
 
-    var claims = new[]
+    // List, а не массив — потому что claim про warehouseId добавляется
+    // условно (его нет вообще у Админа, а не "пустое значение").
+    var claims = new List<Claim>
     {
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.Role, user.Role.Name),
+        new Claim(ClaimTypes.Role, user.RoleName),
     };
+    if (user.WarehouseId is not null)
+    {
+        claims.Add(new Claim("warehouseId", user.WarehouseId.Value.ToString()));
+    }
 
     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]));
     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -76,7 +97,7 @@ app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context
     return Results.Ok(new
     {
         token = new JwtSecurityTokenHandler().WriteToken(token),
-        user = new { user.Id, user.Username, user.FullName, role = user.Role.Name }
+        user = new { user.Id, user.Username, user.FullName, role = user.RoleName, user.WarehouseId }
     });
 });
 

@@ -63,8 +63,13 @@ CREATE TABLE users (
     full_name     TEXT NOT NULL,
     role_id       INTEGER NOT NULL REFERENCES roles(id),
     warehouse_id  INTEGER REFERENCES warehouses(id),  -- NULL только для роли "Админ"
-    is_active     BOOLEAN NOT NULL DEFAULT TRUE,
-    UNIQUE (warehouse_id, id)  -- цель составного FK из documents.user_id
+    is_active     BOOLEAN NOT NULL DEFAULT TRUE
+    -- Без UNIQUE(warehouse_id, id) и без составного FK из documents.user_id
+    -- намеренно: EF Core не разрешает nullable-столбцу участвовать в
+    -- составном ключе/индексе, используемом как цель FK (жёсткое правило
+    -- самого EF, не Postgres) — а warehouse_id тут обязан быть nullable
+    -- из-за роли "Админ". "Автор документа принадлежит складу документа"
+    -- проверяется на уровне API, не составным FK.
 );
 
 CREATE TABLE counterparties (
@@ -134,17 +139,18 @@ CREATE TABLE documents (
     warehouse_id        INTEGER NOT NULL REFERENCES warehouses(id),
     target_warehouse_id INTEGER REFERENCES warehouses(id),   -- заполняется только для типа "Перемещение"
     counterparty_id     INTEGER, -- заполняется для "Приход"/"Расход"
-    user_id             INTEGER NOT NULL,
+    user_id             INTEGER NOT NULL REFERENCES users(id),
     status              TEXT NOT NULL DEFAULT 'Черновик',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     comment             TEXT,
     CHECK (target_warehouse_id IS NULL OR target_warehouse_id <> warehouse_id),
     -- NULL в counterparty_id составной FK не проверяет (стандартное поведение
     -- Postgres MATCH SIMPLE) — так и задумано, поле опциональное.
-    FOREIGN KEY (warehouse_id, counterparty_id) REFERENCES counterparties(warehouse_id, id),
-    -- Автор документа обязан принадлежать тому же складу, что и сам документ
-    -- (Админ, у которого warehouse_id = NULL, тут никогда не подойдёт — и не должен).
-    FOREIGN KEY (warehouse_id, user_id) REFERENCES users(warehouse_id, id)
+    FOREIGN KEY (warehouse_id, counterparty_id) REFERENCES counterparties(warehouse_id, id)
+    -- "Автор документа принадлежит складу документа" — не составной FK
+    -- (users.warehouse_id nullable из-за роли "Админ", EF Core не разрешает
+    -- nullable-столбец в составном ключе, см. комментарий у users), проверка
+    -- этого правила будет на уровне API, когда дойдём до Documents.
 );
 
 CREATE TABLE document_items (

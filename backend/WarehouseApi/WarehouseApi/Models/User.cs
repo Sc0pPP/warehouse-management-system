@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -16,6 +16,8 @@ public partial class User
 
     public int RoleId { get; set; }
 
+    public int? WarehouseId { get; set; }
+
     public bool IsActive { get; set; }
 
     [JsonIgnore]
@@ -23,4 +25,7 @@ public partial class User
 
     [JsonIgnore]
     public virtual Role Role { get; set; } = null!;
+
+    [JsonIgnore]
+    public virtual Warehouse? Warehouse { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -7,6 +7,8 @@ namespace WarehouseApi.Models;
 public partial class Product
 {
     public int Id { get; set; }
+
+    public int WarehouseId { get; set; }
 
     public string Sku { get; set; } = null!;
 
@@ -32,4 +34,7 @@ public partial class Product
 
     [JsonIgnore]
     public virtual ICollection<Stock> Stocks { get; set; } = new List<Stock>();
+
+    [JsonIgnore]
+    public virtual Warehouse Warehouse { get; set; } = null!;
 }
