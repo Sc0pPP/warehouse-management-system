@@ -146,6 +146,107 @@ app.MapPatch("/api/warehouses/{id}", (int id, UpdateWarehouseRequest request, Wa
     if(request.Name is not null) warehouse.Name=request.Name;
     if(request.Address is not null) warehouse.Address=request.Address;
     context.SaveChanges();
+    return Results.Ok(warehouse);
+});
+
+app.MapDelete("/api/warehouses/{id}", (int id, WarehouseDbContext context) =>
+{
+    context.Warehouses.RemoveRange(context.Warehouses.Where(x => x.Id == id));
+    context.SaveChanges();
     return Results.NoContent();
+    
+});
+
+app.MapGet("/api/stock", (int? warehouseId, int? productId, bool? belowMinStock, WarehouseDbContext context) =>
+{
+    var query = context.Stocks
+        .Include(s => s.Product)
+        .Include(s => s.Warehouse)
+        .AsQueryable();
+
+    if (warehouseId is not null)
+        query = query.Where(s => s.WarehouseId == warehouseId);
+
+    if (productId is not null)
+        query = query.Where(s => s.ProductId == productId);
+
+    if (belowMinStock == true)
+        query = query.Where(s => s.Quantity < s.Product.MinStockLevel);
+
+    var result = query.Select(s => new
+    {
+        s.ProductId,
+        ProductSku = s.Product.Sku,
+        ProductName = s.Product.Name,
+        s.WarehouseId,
+        WarehouseName = s.Warehouse.Name,
+        s.Quantity,
+        MinStockLevel = s.Product.MinStockLevel
+    });
+
+    return result.ToList();
+});
+
+//Counterparties
+app.MapGet("/api/counterparties", (int? typeid,WarehouseDbContext context) =>
+{
+
+    var query = context.Counterparties.AsQueryable();
+    if (typeid is not null)
+    {
+        query = query.Where(u => u.TypeId == typeid).AsQueryable();
+    }
+
+    var result = query.Select(s => new
+        {
+            s.Id,
+            s.Name,
+            s.Address,
+            s.TypeId,
+            s.Email,
+            s.Phone
+        }
+    );
+    return result.ToList();
+});
+
+app.MapGet("/api/counterparties/{id}", (int? id, WarehouseDbContext context) =>
+{
+    var counterparty = context.Counterparties.Find(id);
+    if (counterparty is null) return Results.NotFound();
+    return Results.Ok(counterparty);
+});
+
+app.MapPost("/api/counterparties", (CreateCounterpartiesRequest request, WarehouseDbContext context) =>
+{
+    Counterparty counterparty = new Counterparty()
+    {
+        TypeId = request.TypeId,
+        Name = request.Name,
+        Email = request.Email,
+        Phone = request.Phone,
+        Address = request.Address
+    };
+    context.Counterparties.Add(counterparty);
+    context.SaveChanges();
+    return Results.Created($"/api/counterparties/{counterparty.Id}", counterparty);
+});
+app.MapPatch("/api/counterparties/{id}", (int id, UpdateCounetrpartiesRequest request, WarehouseDbContext context) =>
+{
+    Counterparty counterparty = context.Counterparties.Find(id);
+    if(counterparty is null) return Results.NotFound();
+    if (request.Name is not null) counterparty.Name = request.Name;
+    if(request.Email is not null) counterparty.Email = request.Email;
+    if(request.Phone is not null) counterparty.Phone = request.Phone;
+    if(request.Address is not null) counterparty.Address = request.Address;
+    context.SaveChanges();
+    return Results.Ok(counterparty);
+});
+
+app.MapDelete("/api/counterparties/{id}", (int id, WarehouseDbContext context) =>
+{
+    context.Counterparties.RemoveRange(context.Counterparties.Where(x => x.Id == id));
+    context.SaveChanges();
+    return Results.Ok();
 });
 app.Run();
