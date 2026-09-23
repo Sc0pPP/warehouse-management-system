@@ -7,11 +7,73 @@
 
 .app-shell {
   display: flex;
-  /* Раньше было min-height — контейнер мог растягиваться выше экрана,
-     и тогда скроллилась ВСЯ страница целиком, вместе с сайдбаром.
-     height (без min-) жёстко ограничивает контейнер высотой экрана —
-     дальше сам сайдбар никогда никуда не уезжает, скроллится только .content. */
+  flex-direction: column;
   height: 100vh;
+}
+
+/* Шапка — как в мокапе: лого слева, всё остальное справа. Настоящая
+   шапка мокапа несёт ещё поиск и колокольчик уведомлений — оба убрали,
+   потому что ни поиска, ни уведомлений в API нет: показывать нерабочую
+   декорацию хуже, чем не показывать её вовсе. */
+.app-header {
+  flex: none;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.app-header-brand {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+
+.app-header-warehouse {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  padding-left: 14px;
+  border-left: 1px solid var(--color-divider);
+}
+
+.app-header-user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.app-header-avatar {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent-700);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 12px;
+  line-height: 30px;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.app-header-name {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.app-header-role {
+  font-size: 10.5px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  min-height: 0; /* иначе flex-контейнер не даёт детям скроллиться внутри себя */
 }
 
 .sidebar {
@@ -22,16 +84,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.sidebar-brand {
-  font-family: var(--font-heading);
-  font-weight: var(--font-heading-weight);
-  font-size: 18px;
-  letter-spacing: 0.04em;
-  padding: 0 8px 16px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--color-divider);
+  overflow-y: auto;
 }
 
 .sidebar-group {
@@ -82,10 +135,251 @@
   background: var(--color-accent-100);
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-divider);
+}
+
 .content {
   flex: 1;
   min-width: 0; /* чтобы широкие таблицы внутри не распирали layout */
-  height: 100%; /* занимает всю высоту .app-shell (100vh) */
   overflow-y: auto; /* именно тут появляется прокрутка — не на всей странице */
   padding: 24px 28px;
+}
+
+/* ===========================================================
+   Общая "шапка страницы" (kicker/title/subtitle) и форма создания —
+   раньше жили только в Products.css, но нужны на каждой новой странице
+   (Dashboard, Приёмка, Отгрузка, ...), поэтому вынесены сюда один раз. */
+
+.page-head {
+  margin-bottom: var(--space-6);
+}
+
+/* Вариант шапки страницы с кнопками действий справа (как в мокапе —
+   "Создать приёмку"/"Сканер ТСД" и т.п.) — .page-head-text держит
+   kicker/title/subtitle столбиком, .page-head-actions прижимается вправо. */
+.page-head-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  margin-bottom: var(--space-6);
+}
+
+.page-kicker {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--color-accent-700);
+  text-transform: uppercase;
+}
+
+.page-subtitle {
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.page-head-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.form-card {
+  padding: var(--space-4);
+  margin-bottom: var(--space-6);
+  max-width: 420px;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-actions {
+  margin-top: var(--space-2);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Фильтр-чипы над таблицами (Приёмка/Отгрузка/... — "Все"/"В работе"/...) */
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filter-chip-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* ===========================================================
+   Дашборд (Обзор склада) */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.kpi-card {
+  padding: 14px 16px 13px;
+}
+
+.kpi-label {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.kpi-value {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 30px;
+  letter-spacing: -0.01em;
+  margin-top: 11px;
+}
+
+.dash-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.chart-card h5 {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.chart-legend {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  font-size: 11.5px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-swatch {
+  width: 9px;
+  height: 9px;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  height: 160px;
+  margin-top: 18px;
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: 7px;
+}
+
+.chart-bar-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 7px;
+}
+
+.chart-bar-pair {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+}
+
+.chart-bar {
+  flex: 1;
+  background: var(--color-accent);
+}
+
+.chart-bar-secondary {
+  flex: 1;
+  background: var(--color-accent-300);
+}
+
+.chart-bar-label {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 4px;
+  border-top: 1px solid var(--color-divider);
+  cursor: pointer;
+}
+
+.alert-row:first-child {
+  border-top: none;
+}
+
+.alert-row:hover {
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+.alert-mark {
+  width: 3px;
+  height: 28px;
+  flex: none;
+}
+
+.alert-title {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.alert-meta {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  margin-top: 2px;
+}
+
+.alert-value {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.04em;
 }
