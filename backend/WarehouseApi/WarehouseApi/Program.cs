@@ -109,6 +109,7 @@ app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context
 // украсть/испортить чужие данные). У Админа claim'а нет вообще — он должен
 // явно указать warehouseId параметром запроса, иначе непонятно, с каким
 // складом он работает.
+
 static (int? warehouseId, IResult? error) ResolveWarehouseId(ClaimsPrincipal user, int? requestedWarehouseId)
 {
     if (user.IsInRole("Админ"))
@@ -408,5 +409,177 @@ app.MapDelete("/api/counterparties/{id}", (int id, int? warehouseId, ClaimsPrinc
 }).RequireAuthorization();
 
 //Users
+app.MapPost("/api/users", (CreateUserRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    User us = new User();
+    var(whId,error)=ResolveWarehouseId(user, request.WarehouseId);
+    if(error is not null) return error;
+    var targetRole = context.Roles.Find(request.RoleId);
+    if (targetRole is null) return Results.BadRequest("Такой роли не существует");
+
+    if (user.IsInRole("Админ"))
+    {
+        if (targetRole.Name != "Директор")
+            return Results.BadRequest("Админ может назначать только роль Директор");
+    }
+    else if (user.IsInRole("Директор"))
+    {
+        if (targetRole.Name == "Директор" || targetRole.Name == "Админ")
+            return Results.BadRequest("Директор не может назначать роль Директор или Админ");
+    }
+    if (user.IsInRole("Админ"))
+    {
+        us.Username = request.UserName;
+        us.FullName = request.FullName;
+        us.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        us.RoleId = request.RoleId;
+        us.WarehouseId = request.WarehouseId;
+        us.IsActive = request.IsActive;
+    }
+    if (user.IsInRole("Директор"))
+    {
+            us.Username = request.UserName;
+            us.FullName = request.FullName;
+            us.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            us.RoleId = request.RoleId;
+            us.WarehouseId = whId;
+            us.IsActive = request.IsActive;
+    }
+    if (us is not null)
+    {
+        context.Users.Add(us);
+        context.SaveChanges();
+        return Results.Ok(us);
+    }
+   return Results.NotFound();
+}).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+app.MapGet("/api/users/", (int? warehouseId ,ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var (whId, error) = ResolveWarehouseId(user,warehouseId);
+    if (warehouseId is null&&user.IsInRole("Админ"))
+    {
+        var us = context.Users.ToList();
+        if (us is null) return Results.NoContent();
+        return Results.Ok(us);
+    }
+    
+    var uss = context.Users.Where(u=>u.WarehouseId==whId).ToList();
+    if (uss is null) return Results.NoContent();
+    return Results.Ok(uss);
+}).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+
+app.MapGet("/api/users/{id}", (int id,ClaimsPrincipal User, WarehouseDbContext context) =>
+{var us = context.Users.FirstOrDefault(u => u.Id == id);
+    if (us is null) return Results.NotFound();
+
+    if (User.IsInRole("Директор"))
+    {
+        var claim = User.FindFirst("warehouseId");
+        int warehouseId = int.Parse(claim!.Value);
+        if (us.WarehouseId != warehouseId)
+            return Results.Forbid();
+    }
+
+    return Results.Ok(us);
+}).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+
+app.MapPatch("/api/users/{id}", (int id,int? warehouseId,UpdateUserRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var (whId, error) = ResolveWarehouseId(user, warehouseId);
+    var us= context.Users.FirstOrDefault(u => u.Id == id);
+    if (us is null) return Results.NotFound();
+    if (user.IsInRole("Директор"))
+    {
+        if (us.WarehouseId != whId)
+        {
+            return Results.BadRequest();
+        }
+    }
+
+    if (request.UserName is not null) us.Username = request.UserName;
+    if(request.FullName is not null) us.FullName = request.FullName;
+    if (request.IsActive is not null) us.IsActive = request.IsActive.Value;
+    if (request.RoleId is not null)
+    {
+        var targetRole = context.Roles.Find(request.RoleId.Value);
+        if (targetRole is null) return Results.BadRequest("Такой роли не существует");
+
+        if (user.IsInRole("Админ") && targetRole.Name != "Директор")
+            return Results.BadRequest("Админ может назначать только роль Директор");
+
+        if (user.IsInRole("Директор") && (targetRole.Name == "Директор" || targetRole.Name == "Админ"))
+            return Results.BadRequest("Директор не может назначать роль Директор или Админ");
+
+        us.RoleId = request.RoleId.Value;
+    }
+    if(request.WarehouseId is not null&& user.IsInRole("Админ")) us.WarehouseId = request.WarehouseId;
+    if (request.Password is not null) us.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+    context.SaveChanges();
+    return Results.Ok(us); 
+}).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+//Documents
+app.MapGet("/api/documents", (int? warehouseid,ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var (whId, error) = ResolveWarehouseId(user, warehouseid);
+    if (error is not null) return error;
+
+    return Results.Ok(context.Documents.Where(d => d.WarehouseId == whId).ToList());
+    
+}).RequireAuthorization();
+
+app.MapGet("/api/documents/{id}", (int id, int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
+    {
+        var (whId, error) = ResolveWarehouseId(user, warehouseId);
+        if (error is not null) return error;
+
+        var document = context.Documents
+            .Include(d => d.DocumentItems)
+            .FirstOrDefault(x => x.Id == id && x.WarehouseId == whId);
+
+        return document is null ? Results.NotFound() : Results.Ok(document);
+}).RequireAuthorization();
+
+app.MapPost("/api/documents", (CreateDocumentRequest request,ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var claim = user.FindFirst("warehouseId");   
+    if (claim is null)
+        return Results.Forbid(); 
+    int warehouseId = int.Parse(claim.Value);
+    int userId = int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+    foreach (var item in request.Items)
+    {
+        var product = context.Products.FirstOrDefault(p => p.Id == item.ProductId && p.WarehouseId == warehouseId);
+        if (product is null)
+            return Results.BadRequest($"Товар {item.ProductId} не найден на этом складе");
+    }
+
+    var document = new Document
+    {
+        TypeId = request.TypeId,
+        Number = request.Number,
+        WarehouseId = warehouseId,
+        CounterpartyId = request.CounterpartyId,
+        UserId = userId,
+        Comment = request.Comment,
+        Status = "Черновик",
+        IsPosted = false
+    };
+
+    foreach (var item in request.Items)
+    {
+        document.DocumentItems.Add(new DocumentItem
+        {
+            WarehouseId = warehouseId,
+            ProductId = item.ProductId,
+            Quantity = item.Quantity,
+            Price = item.Price
+        });
+    }
+
+    context.Documents.Add(document);
+    context.SaveChanges();
+
+    return Results.Created($"/api/documents/{document.Id}", document);
+}).RequireAuthorization();
 
 app.Run();
