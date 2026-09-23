@@ -45,16 +45,8 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();  // сначала: кто ты?
 app.UseAuthorization();   // потом: что тебе разрешено?
 
-
-//Auth
-// Единственный публичный эндпоинт — тут пока нет токена, поэтому и
-// .RequireAuthorization() на нём быть не может: иначе не выдать сам токен.
 app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
 {
-    // Проекция через Select вместо полной сущности User — обходит баг
-    // материализации: EF Core 10 / Npgsql 10 на этой связке пытается
-    // прочитать nullable warehouse_id как обычный int при загрузке целой
-    // сущности (даже без Include), а через Select читает корректно.
     var user = context.Users
         .Where(u => u.Username == request.Username)
         .Select(u => new
@@ -74,8 +66,6 @@ app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context
         return Results.Unauthorized();
     }
 
-    // List, а не массив — потому что claim про warehouseId добавляется
-    // условно (его нет вообще у Админа, а не "пустое значение").
     var claims = new List<Claim>
     {
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -101,14 +91,6 @@ app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context
         user = new { user.Id, user.Username, user.FullName, role = user.RoleName, user.WarehouseId }
     });
 });
-
-// --- Изоляция по складам ---
-// У Директора/сотрудника в токене есть claim "warehouseId" — их всегда
-// принудительно скопим на этот склад, игнорируя то, что прислал клиент
-// (иначе сотрудник склада 1 мог бы подставить warehouseId склада 2 и
-// украсть/испортить чужие данные). У Админа claim'а нет вообще — он должен
-// явно указать warehouseId параметром запроса, иначе непонятно, с каким
-// складом он работает.
 
 static (int? warehouseId, IResult? error) ResolveWarehouseId(ClaimsPrincipal user, int? requestedWarehouseId)
 {

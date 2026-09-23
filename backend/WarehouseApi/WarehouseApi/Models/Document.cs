@@ -33,7 +33,10 @@ public partial class Document
     [JsonIgnore]
     public virtual Counterparty? Counterparty { get; set; }
 
-    [JsonIgnore]
+    // Не JsonIgnore, в отличие от остальных nav-свойств — это не обратная
+    // ссылка на родителя (как Warehouse/User/Type), а полезная нагрузка
+    // самого документа. Цикл сериализации не образуется: у DocumentItem
+    // обратная ссылка Document как раз JsonIgnore (см. DocumentItem.cs).
     public virtual ICollection<DocumentItem> DocumentItems { get; set; } = new List<DocumentItem>();
 
     [JsonIgnore]
