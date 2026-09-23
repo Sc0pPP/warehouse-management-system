@@ -104,20 +104,20 @@ INSERT INTO documents (type_id, number, warehouse_id, counterparty_id, user_id, 
     (1, 'ПР-004412', 1, 1, 1, 'Проверка',  'Плановая поставка упаковки'),
     (1, 'ПР-004413', 1, 2, 2, 'Разгрузка', 'Плёнка стрейч, машина на воротах 1');
 
-INSERT INTO document_items (document_id, product_id, quantity, price) VALUES
-    (1, 1, 200, 45.00),
-    (1, 7, 500, 55.00),
-    (2, 4, 300, 410.00);
+INSERT INTO document_items (document_id, warehouse_id, product_id, quantity, price) VALUES
+    (1, 1, 1, 200, 45.00),
+    (1, 1, 7, 500, 55.00),
+    (2, 1, 4, 300, 410.00);
 
 -- Документы: Расход
 INSERT INTO documents (type_id, number, warehouse_id, counterparty_id, user_id, status, comment) VALUES
     (2, 'ЗК-88104', 1, 5, 3, 'Комплектация', 'Волна 1'),
     (2, 'ЗК-88106', 1, 6, 4, 'Собран',       'Волна 2');
 
-INSERT INTO document_items (document_id, product_id, quantity, price) VALUES
-    (3, 1, 24, 45.00),
-    (3, 7, 50, 55.00),
-    (4, 5, 10, 850.00);
+INSERT INTO document_items (document_id, warehouse_id, product_id, quantity, price) VALUES
+    (3, 1, 1, 24, 45.00),
+    (3, 1, 7, 50, 55.00),
+    (4, 1, 5, 10, 850.00);
 
 -- Документ "Перемещение" (ПМ-2201) убран — при полной изоляции каталогов
 -- перемещение товара на склад №2 было бы перемещением в каталог, где
@@ -127,8 +127,8 @@ INSERT INTO document_items (document_id, product_id, quantity, price) VALUES
 INSERT INTO documents (type_id, number, warehouse_id, user_id, status, comment) VALUES
     (4, 'ИН-0042', 1, 5, 'День 2 из 5', 'Цикличный пересчёт зоны B');
 
-INSERT INTO document_items (document_id, product_id, quantity, price) VALUES
-    (5, 3, -12, NULL),
-    (5, 8, 2,   NULL);
+INSERT INTO document_items (document_id, warehouse_id, product_id, quantity, price) VALUES
+    (5, 1, 3, -12, NULL),
+    (5, 1, 8, 2,   NULL);
 
 COMMIT;

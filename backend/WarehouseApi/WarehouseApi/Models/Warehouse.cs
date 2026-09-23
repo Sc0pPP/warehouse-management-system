@@ -19,6 +19,9 @@ public partial class Warehouse
     public virtual ICollection<Counterparty> Counterparties { get; set; } = new List<Counterparty>();
 
     [JsonIgnore]
+    public virtual ICollection<DocumentItem> DocumentItems { get; set; } = new List<DocumentItem>();
+
+    [JsonIgnore]
     public virtual ICollection<Document> DocumentTargetWarehouses { get; set; } = new List<Document>();
 
     [JsonIgnore]

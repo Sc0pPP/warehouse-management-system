@@ -22,6 +22,10 @@ public partial class Document
 
     public string Status { get; set; } = null!;
 
+    public bool IsPosted { get; set; }
+
+    public DateTime? PostedAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public string? Comment { get; set; }

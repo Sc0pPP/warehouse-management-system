@@ -10,6 +10,8 @@ public partial class DocumentItem
 
     public int DocumentId { get; set; }
 
+    public int WarehouseId { get; set; }
+
     public int ProductId { get; set; }
 
     public decimal Quantity { get; set; }
@@ -21,4 +23,7 @@ public partial class DocumentItem
 
     [JsonIgnore]
     public virtual Product Product { get; set; } = null!;
+
+    [JsonIgnore]
+    public virtual Warehouse Warehouse { get; set; } = null!;
 }

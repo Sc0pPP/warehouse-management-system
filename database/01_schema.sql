@@ -16,9 +16,9 @@
 -- сам id и так уникален глобально, это чисто техническое требование
 -- Postgres: цель составного FK обязана быть уникальной парой.
 --
--- document_items пока не участвует в этой схеме составных FK (нет
--- собственного warehouse_id) — Documents/document_items ещё не реализованы
--- на уровне API, вернуться к этому вопросу при их проектировании.
+-- document_items тоже несёт свой warehouse_id (продублированный из
+-- родительского документа) ровно за этим — чтобы у него тоже был
+-- составной FK и на documents, и на products.
 
 BEGIN;
 
@@ -140,10 +140,18 @@ CREATE TABLE documents (
     target_warehouse_id INTEGER REFERENCES warehouses(id),   -- заполняется только для типа "Перемещение"
     counterparty_id     INTEGER, -- заполняется для "Приход"/"Расход"
     user_id             INTEGER NOT NULL REFERENCES users(id),
+    -- status — свободный текст для UI/workflow (как в мокапе: "Разгрузка",
+    -- "Собран"...), к движению остатков отношения не имеет.
     status              TEXT NOT NULL DEFAULT 'Черновик',
+    -- is_posted — а вот это как раз "провели документ или нет": пока
+    -- false, stock не тронут; переход в true необратим и происходит
+    -- только через отдельную операцию проведения на уровне API.
+    is_posted           BOOLEAN NOT NULL DEFAULT FALSE,
+    posted_at           TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     comment             TEXT,
     CHECK (target_warehouse_id IS NULL OR target_warehouse_id <> warehouse_id),
+    UNIQUE (warehouse_id, id), -- цель составных FK из document_items
     -- NULL в counterparty_id составной FK не проверяет (стандартное поведение
     -- Postgres MATCH SIMPLE) — так и задумано, поле опциональное.
     FOREIGN KEY (warehouse_id, counterparty_id) REFERENCES counterparties(warehouse_id, id)
@@ -154,11 +162,21 @@ CREATE TABLE documents (
 );
 
 CREATE TABLE document_items (
-    id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    product_id  INTEGER NOT NULL REFERENCES products(id),
-    quantity    NUMERIC(14,3) NOT NULL,   -- для "Инвентаризации" может быть отрицательной (недостача)
-    price       NUMERIC(12,2)
+    id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    document_id  INTEGER NOT NULL,
+    -- Продублирован из родительского документа — нужен только для того,
+    -- чтобы ниже можно было объявить составные FK (у Postgres нет способа
+    -- "составной FK через промежуточную таблицу", только напрямую по паре
+    -- колонок этой же строки).
+    warehouse_id INTEGER NOT NULL REFERENCES warehouses(id),
+    product_id   INTEGER NOT NULL,
+    quantity     NUMERIC(14,3) NOT NULL,   -- для "Инвентаризации" — дельта, может быть отрицательной (недостача)
+    price        NUMERIC(12,2),
+    -- Гарантирует, что warehouse_id позиции совпадает со складом её же
+    -- документа (иначе можно было бы продублировать чужой warehouse_id).
+    FOREIGN KEY (warehouse_id, document_id) REFERENCES documents(warehouse_id, id) ON DELETE CASCADE,
+    -- Гарантирует, что товар в позиции принадлежит тому же складу.
+    FOREIGN KEY (warehouse_id, product_id) REFERENCES products(warehouse_id, id)
 );
 
 -- =========================================================
@@ -178,5 +196,6 @@ CREATE INDEX idx_documents_counterparty   ON documents(counterparty_id);
 CREATE INDEX idx_documents_user           ON documents(user_id);
 CREATE INDEX idx_document_items_doc       ON document_items(document_id);
 CREATE INDEX idx_document_items_product   ON document_items(product_id);
+CREATE INDEX idx_document_items_warehouse ON document_items(warehouse_id);
 
 COMMIT;

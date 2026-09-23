@@ -254,6 +254,15 @@ app.MapDelete("/api/categories/{id}", (int id, int? warehouseId, ClaimsPrincipal
     return Results.NoContent();
 }).RequireAuthorization();
 
+app.MapGet("/api/categories/{id}", (int id,int? warehouseId, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var(whid,error)= ResolveWarehouseId(user, warehouseId);
+    if (error is not null) return error;
+    var cat = context.Categories.FirstOrDefault(x => x.Id == id && x.WarehouseId == whid);
+    if (cat is null) return Results.NotFound();
+    return Results.Ok(cat);
+}).RequireAuthorization();
+
 //Warehouses — управляют только Админ (сами склады, а не их содержимое)
 app.MapGet("/api/warehouses", (WarehouseDbContext context) =>
 {
@@ -397,4 +406,7 @@ app.MapDelete("/api/counterparties/{id}", (int id, int? warehouseId, ClaimsPrinc
     context.SaveChanges();
     return Results.NoContent();
 }).RequireAuthorization();
+
+//Users
+
 app.Run();
