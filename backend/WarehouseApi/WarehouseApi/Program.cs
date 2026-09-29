@@ -564,4 +564,61 @@ app.MapPost("/api/documents", (CreateDocumentRequest request,ClaimsPrincipal use
     return Results.Created($"/api/documents/{document.Id}", document);
 }).RequireAuthorization();
 
+app.MapPost("/api/documents/{id}/post", (int id, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var claim = user.FindFirst("warehouseId");
+    if (claim is null) return Results.Forbid();
+    int warehouseId = int.Parse(claim.Value);
+    
+    var document = context.Documents
+        .Include(d => d.DocumentItems)
+        .FirstOrDefault(x => x.Id == id && x.WarehouseId == warehouseId);
+
+    if (document is null) return Results.NotFound();
+    if (document.IsPosted) return Results.Conflict("Документ уже проведён");
+    
+    var typeName = context.DocumentTypes.Find(document.TypeId)?.Name;
+
+    foreach (var item in document.DocumentItems)
+    {
+        var stock = context.Stocks.FirstOrDefault(s => s.ProductId == item.ProductId && s.WarehouseId == warehouseId);
+
+        if (typeName == "Приход")
+        {
+            if (stock is null)
+            {
+                stock = new Stock { ProductId = item.ProductId, WarehouseId = warehouseId, Quantity = 0 };
+                context.Stocks.Add(stock);
+            }
+            stock.Quantity += item.Quantity;
+        }
+        else if (typeName == "Расход")
+        {
+            if (stock is null || stock.Quantity < item.Quantity)
+                return Results.BadRequest($"Недостаточно товара {item.ProductId} на складе");
+            stock.Quantity -= item.Quantity;
+        }
+        else if (typeName == "Инвентаризация")
+        {
+            // quantity тут — дельта (может быть отрицательной, см. сид: -12, +2)
+            if (stock is null)
+            {
+                stock = new Stock { ProductId = item.ProductId, WarehouseId = warehouseId, Quantity = 0 };
+                context.Stocks.Add(stock);
+            }
+            if (stock.Quantity + item.Quantity < 0)
+                return Results.BadRequest($"Инвентаризация увела бы остаток {item.ProductId} в минус");
+            stock.Quantity += item.Quantity;
+        }
+    }
+    document.IsPosted = true;
+    document.PostedAt = DateTime.UtcNow;
+
+    context.SaveChanges();
+
+    return Results.Ok(document);
+    
+}).RequireAuthorization();
+
+
 app.Run();
