@@ -162,9 +162,12 @@ export function Products() {
 
       <h5>Список товаров</h5>
       {/* .text-muted — приглушённый серый текст из дизайн-системы */}
+      {/* error тут бывает и от единичного действия (удаление одного товара),
+          а не только от неудачной загрузки — таблицу из-за этого прятать
+          не стоит, иначе пропадает весь список из-за ошибки в одной строке. */}
       {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
-      {loading && !error && <p className="text-muted">Загрузка...</p>}
-      {!loading && !error && (
+      {loading && <p className="text-muted">Загрузка...</p>}
+      {!loading && (
         <table className="table">
           <thead>
             <tr>

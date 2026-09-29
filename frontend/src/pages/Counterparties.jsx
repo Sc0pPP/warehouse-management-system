@@ -114,9 +114,11 @@ export function Counterparties() {
         </form>
       </div>
 
+      {/* Как и в Products.jsx — error бывает от точечного действия (удаление
+          одного контрагента), таблицу из-за этого прятать не нужно. */}
       {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
-      {loading && !error && <p className="text-muted">Загрузка...</p>}
-      {!loading && !error && (
+      {loading && <p className="text-muted">Загрузка...</p>}
+      {!loading && (
         <table className="table">
           <thead>
             <tr>

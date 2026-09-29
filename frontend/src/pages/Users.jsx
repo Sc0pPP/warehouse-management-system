@@ -175,9 +175,12 @@ export function Users({ role }) {
         </form>
       </div>
 
+      {/* Как и в Documents.jsx — error бывает от точечного действия
+          (деактивация одного пользователя), таблицу из-за этого прятать
+          не нужно. */}
       {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
-      {loading && !error && <p className="text-muted">Загрузка...</p>}
-      {!loading && !error && (
+      {loading && <p className="text-muted">Загрузка...</p>}
+      {!loading && (
         <table className="table">
           <thead>
             <tr>

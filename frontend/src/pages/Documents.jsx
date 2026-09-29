@@ -93,6 +93,30 @@ export function Documents({ typeId, kicker, title, createLabel }) {
     }
   }
 
+  // "Провести" — списывает/приходует остатки на бэке (POST .../post).
+  // Необратимо, поэтому кнопка есть только у черновиков (d.isPosted === false).
+  // Ошибки сервера ("уже проведён" 409, "не хватает остатка" 400) приходят
+  // как JSON-строка (Results.BadRequest("текст")) — поэтому response.json(),
+  // а не .text(), и есть fallback на случай, если тело не строка.
+  async function handlePost(id) {
+    try {
+      const response = await fetch(`${API_BASE}/documents/${id}/post`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      if (!response.ok) {
+        const message = await response.json().catch(() => null);
+        throw new Error(typeof message === "string" ? message : `Ошибка сервера: ${response.status}`);
+      }
+      const updated = await response.json();
+      // Заменяем документ в списке на версию с сервера (isPosted/postedAt
+      // теперь актуальны) — без повторного похода за всем списком.
+      setDocuments((prev) => prev.map((d) => (d.id === id ? updated : d)));
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   const filtered = documents
     .filter((d) => d.typeId === typeId)
     .filter((d) => filter === "all" || (filter === "draft" ? !d.isPosted : d.isPosted));
@@ -202,9 +226,13 @@ export function Documents({ typeId, kicker, title, createLabel }) {
         ))}
       </div>
 
+      {/* error теперь бывает и от единичного действия (провести один документ),
+          а не только от неудачной загрузки страницы целиком — таблицу
+          в этом случае прятать не нужно, иначе пропадает весь список
+          из-за ошибки в одной строке. */}
       {error && <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>}
-      {loading && !error && <p className="text-muted">Загрузка...</p>}
-      {!loading && !error && (
+      {loading && <p className="text-muted">Загрузка...</p>}
+      {!loading && (
         <table className="table">
           <thead>
             <tr>
@@ -213,6 +241,7 @@ export function Documents({ typeId, kicker, title, createLabel }) {
               <th>Комментарий</th>
               <th>Создан</th>
               <th>Статус</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -228,6 +257,13 @@ export function Documents({ typeId, kicker, title, createLabel }) {
                     <span className={`tag ${d.isPosted ? "tag-accent" : "tag-neutral"}`}>
                       {d.isPosted ? "Проведён" : "Черновик"}
                     </span>
+                  </td>
+                  <td>
+                    {!d.isPosted && (
+                      <button className="btn btn-primary" onClick={() => handlePost(d.id)}>
+                        Провести
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
