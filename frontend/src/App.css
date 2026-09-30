@@ -35,7 +35,7 @@
 .app-header-warehouse {
   font-size: 12px;
   letter-spacing: 0.06em;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-muted);
   padding-left: 14px;
   border-left: 1px solid var(--color-divider);
 }
@@ -67,7 +67,7 @@
 
 .app-header-role {
   font-size: 10.5px;
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+  color: var(--color-text-muted);
 }
 
 .app-body {
@@ -97,7 +97,7 @@
   font-weight: var(--font-heading-weight);
   font-size: 10px;
   letter-spacing: 0.16em;
-  color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  color: var(--color-text-muted);
 }
 
 .nav-item {
@@ -177,7 +177,7 @@
 }
 
 .page-subtitle {
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-muted);
   font-size: 13px;
   margin-top: 4px;
 }
@@ -232,8 +232,8 @@
 }
 
 .filter-chip-active {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
+  border-color: var(--color-accent-700);
+  background: var(--color-accent-700);
   color: var(--color-bg);
 }
 
@@ -248,14 +248,23 @@
 
 .kpi-card {
   padding: 14px 16px 13px;
+  animation: rise-in var(--duration-slow) var(--ease-standard) backwards;
 }
+
+/* Каждая карточка стартует чуть позже предыдущей — "веерное" появление
+   вместо одновременной вспышки четырёх блоков разом. nth-child, а не
+   inline style — числа фиксированы (4 KPI), не нужно тянуть в JS. */
+.kpi-card:nth-child(1) { animation-delay: 0ms; }
+.kpi-card:nth-child(2) { animation-delay: 60ms; }
+.kpi-card:nth-child(3) { animation-delay: 120ms; }
+.kpi-card:nth-child(4) { animation-delay: 180ms; }
 
 .kpi-label {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 10px;
   letter-spacing: 0.14em;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-muted);
 }
 
 .kpi-value {
@@ -285,7 +294,7 @@
   display: flex;
   gap: 14px;
   font-size: 11.5px;
-  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  color: var(--color-text-muted);
 }
 
 .chart-legend-item {
@@ -330,17 +339,22 @@
 .chart-bar {
   flex: 1;
   background: var(--color-accent);
+  /* height анимируется в JS (Dashboard.jsx монтирует столбики на 0%,
+     следующим кадром выставляет реальную высоту) — transition тут
+     ловит именно этот переход, а не реагирует на resize/ререндер. */
+  transition: height var(--duration-slow) var(--ease-standard);
 }
 
 .chart-bar-secondary {
   flex: 1;
   background: var(--color-accent-300);
+  transition: height var(--duration-slow) var(--ease-standard);
 }
 
 .chart-bar-label {
   font-size: 10px;
   letter-spacing: 0.04em;
-  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+  color: var(--color-text-muted);
 }
 
 .alert-row {
@@ -349,14 +363,30 @@
   gap: 12px;
   padding: 11px 4px;
   border-top: 1px solid var(--color-divider);
-  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-standard);
+  /* Сброс на случай, если .alert-row висит на <button> (кликабельные
+     алерты) — на <div> эти свойства ни на что не влияют, безвредны. */
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--color-divider);
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
 }
 
 .alert-row:first-child {
   border-top: none;
 }
 
-.alert-row:hover {
+/* Раньше cursor:pointer и hover-подсветка стояли на всех .alert-row
+   без разбора, хотя ни у одной не было обработчика клика — обещание
+   интерактивности, которого не было. Курсор и подсветка теперь только
+   там, где строка реально куда-то ведёт. */
+.alert-row--clickable {
+  cursor: pointer;
+}
+.alert-row--clickable:hover {
   background: color-mix(in srgb, var(--color-text) 4%, transparent);
 }
 
@@ -373,7 +403,7 @@
 
 .alert-meta {
   font-size: 11px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  color: var(--color-text-muted);
   margin-top: 2px;
 }
 

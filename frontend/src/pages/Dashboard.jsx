@@ -23,13 +23,20 @@ function last14Days() {
 // самих данных — только то, что реально можно посчитать по API.
 // Загрузку ячеек хранения убрали целиком: в схеме нет таблицы ячеек,
 // показывать выдуманные проценты не стали.
-export function Dashboard() {
+//
+// onNavigate — необязательный колбэк от App.jsx (setScreen), чтобы клик
+// по алерту реально переключал экран, а не просто выглядел кликабельным.
+export function Dashboard({ onNavigate }) {
   const [products, setProducts] = useState([]);
   const [lowStock, setLowStock] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Столбики графика рендерятся на 0%, а следующим кадром получают
+  // реальную высоту — CSS transition на height (App.css) ловит именно
+  // этот переход и "выращивает" их, а не рисует сразу готовыми.
+  const [chartGrown, setChartGrown] = useState(false);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -56,6 +63,26 @@ export function Dashboard() {
     }
     loadDashboard();
   }, []);
+
+  // Двойной requestAnimationFrame — стандартный приём, чтобы гарантировать
+  // отрисовку столбиков на 0% ДО того, как браузер увидит следующее
+  // изменение стиля: один кадр иногда схлопывается с первым рендером
+  // (браузер просто не успевает нарисовать "0%" между ними), и transition
+  // молча не срабатывает — переход с 0% сразу на итоговую высоту минует
+  // анимацию. Два кадра подряд этого не допускают.
+  useEffect(() => {
+    if (loading) return;
+    let raf2 = null;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setChartGrown(true));
+    });
+    // Один cleanup отменяет оба кадра — raf2 существует только если
+    // raf1 уже успел выполниться к моменту размонтирования.
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2 !== null) cancelAnimationFrame(raf2);
+    };
+  }, [loading]);
 
   if (loading) return <p className="text-muted">Загрузка...</p>;
   if (error) return <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>;
@@ -116,8 +143,8 @@ export function Dashboard() {
             {chart.map((d, i) => (
               <div key={i} className="chart-bar-col">
                 <div className="chart-bar-pair">
-                  <div className="chart-bar" style={{ height: `${(d.incoming / chartMax) * 100}%` }}></div>
-                  <div className="chart-bar-secondary" style={{ height: `${(d.outgoing / chartMax) * 100}%` }}></div>
+                  <div className="chart-bar" style={{ height: chartGrown ? `${(d.incoming / chartMax) * 100}%` : "0%" }}></div>
+                  <div className="chart-bar-secondary" style={{ height: chartGrown ? `${(d.outgoing / chartMax) * 100}%` : "0%" }}></div>
                 </div>
                 <div className="chart-bar-label">{d.label}</div>
               </div>
@@ -132,16 +159,35 @@ export function Dashboard() {
             {lowStock.length === 0 && draftDocuments.length === 0 && (
               <p className="text-muted" style={{ fontSize: 13 }}>Ничего не требует внимания</p>
             )}
-            {lowStock.length > 0 && (
-              <div className="alert-row">
-                <div className="alert-mark" style={{ background: "var(--color-accent-700)" }}></div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="alert-title">Ниже минимального запаса</div>
-                  <div className="alert-meta">{lowStock.length} позиций</div>
-                </div>
-                <div className="alert-value">{lowStock.length}</div>
-              </div>
-            )}
+            {lowStock.length > 0 && (() => {
+              // Единственный из двух алертов реально куда-то ведёт — "Ниже
+              // минимума" однозначно указывает на Номенклатуру. У
+              // "Непроведённых документов" нет одного разумного адреса
+              // (черновики размазаны по трём разным экранам — Приёмка/
+              // Отгрузка/Инвентаризация), поэтому он остаётся некликабельным
+              // и без --clickable, вместо того чтобы обещать переход не туда.
+              //
+              // AlertTag — <button>, а не <div onClick>: div с onClick не
+              // получает фокус с клавиатуры и не объявляется скринридером
+              // как интерактивный элемент. Заглавная переменная как имя
+              // тега — JSX так и задуман: строчные буквы — DOM-тег,
+              // заглавные — компонент/переменная-с-именем-тега.
+              const AlertTag = onNavigate ? "button" : "div";
+              return (
+                <AlertTag
+                  type={onNavigate ? "button" : undefined}
+                  className={`alert-row${onNavigate ? " alert-row--clickable" : ""}`}
+                  onClick={onNavigate ? () => onNavigate("products") : undefined}
+                >
+                  <div className="alert-mark" style={{ background: "var(--color-accent-700)" }}></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="alert-title">Ниже минимального запаса</div>
+                    <div className="alert-meta">{lowStock.length} позиций</div>
+                  </div>
+                  <div className="alert-value">{lowStock.length}</div>
+                </AlertTag>
+              );
+            })()}
             {draftDocuments.length > 0 && (
               <div className="alert-row">
                 <div className="alert-mark" style={{ background: "var(--color-accent)" }}></div>

@@ -134,7 +134,7 @@ function App() {
         </nav>
 
         <main className="content">
-          {screen === "dash" && <Dashboard />}
+          {screen === "dash" && <Dashboard onNavigate={setScreen} />}
           {screen === "products" && <Products />}
           {screen === "receiving" && <Documents typeId={1} kicker="ОПЕРАЦИИ" title="Приёмка товара" createLabel="Создать приёмку" />}
           {screen === "shipping" && <Documents typeId={2} kicker="ОПЕРАЦИИ" title="Отгрузка и заказы" createLabel="Создать отгрузку" />}
