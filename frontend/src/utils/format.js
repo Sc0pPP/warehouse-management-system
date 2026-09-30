@@ -23,3 +23,27 @@ export function formatNumber(value) {
 export function formatMoney(value) {
   return `${moneyFormat.format(Number(value) || 0)} ₽`;
 }
+
+// Дата и время из ISO-строки бэка ("2026-09-23T08:59:01Z") в привычный
+// вид: formatDate → "23.09.2026", formatDateTime → "23.09.2026, 11:59".
+export function formatDate(iso) {
+  return iso ? new Date(iso).toLocaleDateString("ru-RU") : "—";
+}
+
+export function formatDateTime(iso) {
+  return iso
+    ? new Date(iso).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+}
+
+// Инициалы для квадратных аватарок: "А. Ковалёв" → "АК", "Администратор" → "А".
+// filter(Boolean) выкидывает пустые куски от двойных пробелов.
+export function initials(fullName) {
+  return fullName
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}

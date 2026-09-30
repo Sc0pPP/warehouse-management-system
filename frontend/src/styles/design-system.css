@@ -295,7 +295,10 @@ figcaption {
 }
 
 /* — forms — */
-.field > label {
+/* .field-label-text — та же подпись, но для группы (радиокнопки,
+   сегмент-переключатель), где <label for> вести не к чему. */
+.field > label,
+.field > .field-label-text {
   display: block; font-size: 12px; margin-bottom: 5px;
   color: color-mix(in srgb, var(--color-text) 70%, transparent);
 }

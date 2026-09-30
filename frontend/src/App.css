@@ -520,7 +520,8 @@
 
 /* Звёздочка обязательного поля — через CSS, а не текстом в разметке:
    скринридер и так узнаёт об обязательности из атрибута required. */
-.field-required > label::after {
+.field-required > label::after,
+.field-required > .field-label-text::after {
   content: " *";
   color: var(--color-danger);
 }
@@ -708,6 +709,207 @@
 
 .row-new {
   animation: row-flash 1.8s var(--ease-standard);
+}
+
+/* Вторая строчка внутри ячейки — логин под именем, дата проведения
+   под статусом и т.п. */
+.cell-sub {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+.cell-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-divider);
+  transition: border-color var(--duration-base) var(--ease-standard),
+              color var(--duration-base) var(--ease-standard);
+}
+
+.cell-link:hover {
+  color: var(--color-accent-700);
+  border-color: currentColor;
+}
+
+/* Человек в таблице: квадратная аватарка с инициалами (как в шапке)
+   + имя и логин столбиком. */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.person-avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-100);
+  color: var(--color-accent-800);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.person-avatar.is-muted {
+  border-color: var(--color-divider);
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.person-name {
+  font-weight: 500;
+}
+
+/* Сегмент-переключатель на всю ширину поля (тип контрагента в форме) */
+.seg-block {
+  display: flex;
+  width: 100%;
+}
+
+.seg-block .seg-opt {
+  flex: 1;
+  justify-content: center;
+  min-height: 36px;
+}
+
+/* ===========================================================
+   Редактор позиций документа (Приёмка / Отгрузка / Инвентаризация)
+   Колонки задаются переменной --items-cols прямо в JSX: у Инвентаризации
+   нет цены и суммы, поэтому сетка у неё другая. */
+
+.items-editor {
+  border: 1px solid var(--color-divider);
+}
+
+.items-head,
+.item-row {
+  display: grid;
+  grid-template-columns: var(--items-cols);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+}
+
+.items-head {
+  padding-block: 9px;
+  border-bottom: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.item-row {
+  animation: rise-in var(--duration-base) var(--ease-standard);
+}
+
+.item-row + .item-row {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+
+.items-head .cell-num,
+.item-sum {
+  text-align: right;
+}
+
+.item-sum {
+  padding-top: 9px;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.item-hint {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+
+.item-hint.is-warn {
+  color: var(--color-warn);
+}
+
+.item-remove {
+  width: 32px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-standard),
+              background var(--duration-base) var(--ease-standard);
+}
+
+.item-remove:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: var(--color-danger-100);
+}
+
+.item-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.items-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+}
+
+.items-total {
+  margin-left: auto;
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.items-total strong {
+  display: block;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 20px;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .items-head {
+    display: none;
+  }
+
+  /* На телефоне строка позиции раскладывается в две строки:
+     товар на всю ширину, под ним количество/цена и крестик. */
+  .item-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 32px;
+  }
+
+  .item-product {
+    grid-column: 1 / -1;
+  }
+
+  .item-sum {
+    display: none;
+  }
+
+  /* Крестик всегда в последней колонке — у Инвентаризации нет цены,
+     и без явного места он встал бы во вторую, широкую колонку. */
+  .item-row .item-remove {
+    grid-column: -2 / -1;
+  }
 }
 
 /* Пустое состояние таблицы — вместо пустого <tbody> */

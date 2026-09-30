@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import "./Products.css";
 import { authHeaders } from "../auth.js";
+import { API_BASE, networkMessage } from "../api.js";
 import { Modal } from "../components/Modal.jsx";
+import { Callout, Corners, EmptyRow, FilterChips, FormFooter, PageHeader, PlusIcon, SkeletonRows } from "../components/ui.jsx";
+import { useTwoStepConfirm } from "../hooks/useTwoStepConfirm.js";
 import { plural, formatNumber, formatMoney } from "../utils/format.js";
-
-const API_BASE = "http://localhost:5034/api";
 
 const UNITS = ["шт", "уп", "рул", "кг", "л", "м", "пал"];
 
@@ -34,14 +35,6 @@ function stockStatus(product, qty) {
   return { label: "Норма", cls: "tag-accent" };
 }
 
-function PlusIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-      <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
 export function Products() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -60,8 +53,7 @@ export function Products() {
 
   // id только что созданной позиции — её строка вспыхнет (класс .row-new)
   const [lastCreatedId, setLastCreatedId] = useState(null);
-  // id строки, которая ждёт второго клика "Точно удалить?"
-  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
+  const deleteConfirm = useTwoStepConfirm();
 
   useEffect(() => {
     async function load() {
@@ -82,23 +74,13 @@ export function Products() {
         // в объект: [[1, 1440], [7, 1504]] → { 1: 1440, 7: 1504 }
         setStockByProduct(Object.fromEntries(stock.map((s) => [s.productId, s.quantity])));
       } catch (err) {
-        setError(err.message === "Failed to fetch" ? "Сервер недоступен" : err.message);
+        setError(networkMessage(err));
       } finally {
         setLoading(false);
       }
     }
     load();
   }, []);
-
-  // Подтверждение удаления "остывает" через 3 секунды: если второй клик
-  // так и не последовал, кнопка возвращается в обычное состояние.
-  // Возвращаемая функция — cleanup: сбрасывает таймер, если подтверждение
-  // успело смениться раньше (нажали другую строку / удалили).
-  useEffect(() => {
-    if (confirmingDeleteId === null) return;
-    const timer = setTimeout(() => setConfirmingDeleteId(null), 3000);
-    return () => clearTimeout(timer);
-  }, [confirmingDeleteId]);
 
   function openModal() {
     setForm(EMPTY_FORM);
@@ -155,14 +137,14 @@ export function Products() {
       setFilter("all");
       setModalOpen(false);
     } catch (err) {
-      setFormError(err.message === "Failed to fetch" ? "Сервер недоступен" : err.message);
+      setFormError(networkMessage(err));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    setConfirmingDeleteId(null);
+    deleteConfirm.reset();
     try {
       const response = await fetch(`${API_BASE}/products/${id}`, { method: "DELETE", headers: authHeaders() });
       if (!response.ok) {
@@ -172,7 +154,7 @@ export function Products() {
       }
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      setError(err.message);
+      setError(networkMessage(err));
     }
   }
 
@@ -194,51 +176,34 @@ export function Products() {
 
   return (
     <div>
-      <div className="page-head-row">
-        <div>
-          <div className="page-kicker">ЗАПАСЫ</div>
-          <h1>Номенклатура</h1>
-          <div className="page-subtitle">
-            {products.length} {plural(products.length, ["позиция", "позиции", "позиций"])} ·{" "}
-            {categories.length} {plural(categories.length, ["группа", "группы", "групп"])}
-          </div>
-        </div>
-        <div className="page-head-actions">
+      <PageHeader
+        kicker="ЗАПАСЫ"
+        title="Номенклатура"
+        subtitle={`${products.length} ${plural(products.length, ["позиция", "позиции", "позиций"])} · ${categories.length} ${plural(categories.length, ["группа", "группы", "групп"])}`}
+        actions={
           <button className="btn btn-primary btn-lg" onClick={openModal}>
             <PlusIcon />
             Добавить позицию
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
-        <div className="callout callout-danger" role="alert" style={{ marginBottom: 16 }}>
-          <div className="callout-body">{error}</div>
-          <button className="callout-close" onClick={() => setError(null)} aria-label="Скрыть сообщение">×</button>
-        </div>
+        <Callout onClose={() => setError(null)} style={{ marginBottom: 16 }}>
+          {error}
+        </Callout>
       )}
 
-      <div className="filter-chips">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            className={`filter-chip${filter === f.id ? " filter-chip-active" : ""}`}
-            onClick={() => setFilter(f.id)}
-            aria-pressed={filter === f.id}
-          >
-            {f.label}
-            <span className="filter-chip-count">{counts[f.id]}</span>
-          </button>
-        ))}
-        {!loading && (
-          <span className="filter-chips-meta">
-            показано {visible.length} из {products.length}
-          </span>
-        )}
-      </div>
+      <FilterChips
+        filters={FILTERS}
+        value={filter}
+        onChange={setFilter}
+        counts={counts}
+        meta={!loading && `показано ${visible.length} из ${products.length}`}
+      />
 
       <div className="data-frame blueprint">
-        <i className="corner tl"></i><i className="corner tr"></i><i className="corner bl"></i><i className="corner br"></i>
+        <Corners />
         <table className="table">
           <thead>
             <tr>
@@ -252,54 +217,43 @@ export function Products() {
             </tr>
           </thead>
           <tbody>
-            {/* Пока грузится — скелетон той же формы, что и будущие строки */}
-            {loading &&
-              Array.from({ length: 6 }, (_, i) => (
-                <tr key={i} aria-hidden="true">
-                  <td><span className="skeleton" style={{ width: 84 }}></span></td>
-                  <td><span className="skeleton" style={{ width: `${55 + ((i * 17) % 35)}%` }}></span></td>
-                  <td><span className="skeleton" style={{ width: 70 }}></span></td>
-                  <td><span className="skeleton" style={{ width: 40, marginLeft: "auto" }}></span></td>
-                  <td><span className="skeleton" style={{ width: 50, marginLeft: "auto" }}></span></td>
-                  <td><span className="skeleton" style={{ width: 76 }}></span></td>
-                  <td></td>
-                </tr>
-              ))}
+            {loading && (
+              <SkeletonRows
+                rows={6}
+                cells={[{ w: 84 }, { w: "70%" }, { w: 70 }, { w: 40, right: true }, { w: 50, right: true }, { w: 76 }, null]}
+              />
+            )}
 
             {!loading && products.length === 0 && (
-              <tr className="table-empty">
-                <td colSpan={7}>
-                  <div className="table-empty-title">Номенклатура пуста</div>
-                  <p className="table-empty-text">
-                    Добавьте первую позицию — после этого её можно будет выбирать в документах приёмки и отгрузки.
-                  </p>
-                  <button className="btn btn-primary" onClick={openModal}>
-                    <PlusIcon />
-                    Добавить позицию
-                  </button>
-                </td>
-              </tr>
+              <EmptyRow
+                colSpan={7}
+                title="Номенклатура пуста"
+                text="Добавьте первую позицию — после этого её можно будет выбирать в документах приёмки и отгрузки."
+              >
+                <button className="btn btn-primary" onClick={openModal}>
+                  <PlusIcon />
+                  Добавить позицию
+                </button>
+              </EmptyRow>
             )}
 
             {!loading && products.length > 0 && visible.length === 0 && (
-              <tr className="table-empty">
-                <td colSpan={7}>
-                  <div className="table-empty-title">Нет позиций по фильтру</div>
-                  <p className="table-empty-text">
-                    Сейчас ни одна позиция не подходит под «{FILTERS.find((f) => f.id === filter)?.label}».
-                  </p>
-                  <button className="btn btn-secondary" onClick={() => setFilter("all")}>
-                    Показать все
-                  </button>
-                </td>
-              </tr>
+              <EmptyRow
+                colSpan={7}
+                title="Нет позиций по фильтру"
+                text={`Сейчас ни одна позиция не подходит под «${FILTERS.find((f) => f.id === filter)?.label}».`}
+              >
+                <button className="btn btn-secondary" onClick={() => setFilter("all")}>
+                  Показать все
+                </button>
+              </EmptyRow>
             )}
 
             {!loading &&
               visible.map((p) => {
                 const qty = qtyOf(p);
                 const status = stockStatus(p, qty);
-                const confirming = confirmingDeleteId === p.id;
+                const confirming = deleteConfirm.isPending(p.id);
                 return (
                   <tr key={p.id} className={p.id === lastCreatedId ? "row-new" : undefined}>
                     <td className="cell-code">{p.sku}</td>
@@ -318,7 +272,7 @@ export function Products() {
                           браузерного confirm(), но и без случайных потерь. */}
                       <button
                         className={`btn ${confirming ? "btn-danger" : "btn-ghost-danger"}`}
-                        onClick={() => (confirming ? handleDelete(p.id) : setConfirmingDeleteId(p.id))}
+                        onClick={() => (confirming ? handleDelete(p.id) : deleteConfirm.arm(p.id))}
                         aria-label={confirming ? `Подтвердить удаление ${p.name}` : `Удалить ${p.name}`}
                       >
                         {confirming ? "Точно удалить?" : "Удалить"}
@@ -407,24 +361,14 @@ export function Products() {
             </label>
           </section>
 
-          {formError && (
-            <div className="callout callout-danger" role="alert">
-              <div className="callout-body">{formError}</div>
-            </div>
-          )}
+          {formError && <Callout>{formError}</Callout>}
 
-          <div className="modal-footer">
-            <span className="modal-footer-note">
-              <span style={{ color: "var(--color-danger)" }}>*</span> — обязательные поля
-            </span>
-            <button type="button" className="btn btn-secondary btn-lg" onClick={closeModal} disabled={submitting}>
-              Отмена
-            </button>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
-              {submitting && <span className="btn-spinner" aria-hidden="true"></span>}
-              {submitting ? "Создаём…" : "Создать позицию"}
-            </button>
-          </div>
+          <FormFooter
+            onCancel={closeModal}
+            submitting={submitting}
+            submitLabel="Создать позицию"
+            submittingLabel="Создаём…"
+          />
         </form>
       </Modal>
     </div>

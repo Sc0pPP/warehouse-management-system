@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
 import { saveSession } from "../auth.js";
+import { API_BASE } from "../api.js";
 import "./Login.css";
-
-const API_BASE = "http://localhost:5034/api";
 
 // Демо-учётки из database/02_seed.sql. Показываются ТОЛЬКО в dev-сборке
 // (import.meta.env.DEV — Vite подставляет true при `npm run dev` и false

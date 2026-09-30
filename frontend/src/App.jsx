@@ -8,16 +8,7 @@ import { Warehouses } from "./pages/Warehouses.jsx";
 import { Counterparties } from "./pages/Counterparties.jsx";
 import { Users } from "./pages/Users.jsx";
 import { Documents } from "./pages/Documents.jsx";
-
-// Инициалы для аватарки в шапке: "А. Ковалёв" -> "АК".
-// Берём первый символ каждого "слова" (split по пробелу) и склеиваем.
-function getInitials(fullName) {
-  return fullName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
+import { initials } from "./utils/format.js";
 
 // Пункты меню зависят от роли — это прямое отражение того, что бэкенд
 // вообще разрешает делать каждой роли (Program.cs, RequireRole(...) на
@@ -54,7 +45,9 @@ function getNavGroups(role) {
       title: "ЗАПАСЫ",
       items: [
         { id: "products", label: "Номенклатура" },
-        { id: "suppliers", label: "Поставщики" },
+        // "Контрагенты", а не "Поставщики", как в мокапе: в разделе
+        // и поставщики, и покупатели (для отгрузки) — это одна таблица.
+        { id: "suppliers", label: "Контрагенты" },
       ],
     },
   ];
@@ -101,7 +94,7 @@ function App() {
       <header className="app-header">
         <div className="app-header-brand">СКЛАД · WMS</div>
         <div className="app-header-user">
-          <div className="app-header-avatar">{getInitials(currentUser.fullName)}</div>
+          <div className="app-header-avatar">{initials(currentUser.fullName)}</div>
           <div>
             <div className="app-header-name">{currentUser.fullName}</div>
             <div className="app-header-role">{currentUser.role}</div>
@@ -145,7 +138,7 @@ function App() {
             {screen === "count" && <Documents typeId={4} kicker="ОПЕРАЦИИ" title="Инвентаризация" createLabel="Начать пересчёт" />}
             {screen === "suppliers" && <Counterparties />}
             {screen === "warehouses" && <Warehouses />}
-            {screen === "users" && <Users role={currentUser.role} />}
+            {screen === "users" && <Users role={currentUser.role} currentUserId={currentUser.id} />}
           </div>
         </main>
       </div>

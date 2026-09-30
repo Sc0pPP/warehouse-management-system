@@ -27,9 +27,12 @@ export function Modal({ open, onClose, kicker, title, subtitle, width = 560, chi
     if (open && !dialog.open) {
       dialog.showModal();
       // showModal() по умолчанию фокусирует первый фокусируемый элемент —
-      // это был бы крестик в шапке. Сразу переводим фокус в первое поле
-      // формы: человек открыл окно, чтобы что-то вводить.
-      dialog.querySelector("input, select, textarea")?.focus();
+      // это был бы крестик в шапке. Сразу переводим фокус в поле формы:
+      // человек открыл окно, чтобы что-то вводить. Если форма пометила
+      // нужное поле атрибутом data-autofocus — в него, иначе в первое.
+      const target =
+        dialog.querySelector("[data-autofocus]") ?? dialog.querySelector("input, select, textarea");
+      target?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
     }

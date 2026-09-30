@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { authHeaders } from "../auth.js";
-
-const API_BASE = "http://localhost:5034/api";
+import { API_BASE } from "../api.js";
 
 // Последние 14 календарных дней, от старого к новому — под график
 // "приёмка/отгрузка". Возвращаем объекты {key, label}: key — "YYYY-MM-DD"
