@@ -1,0 +1,120 @@
+/* Сам <dialog> — прозрачная "рамка" без отступов вокруг панели.
+   Отступов нет намеренно: так клик за пределами .modal-panel попадает
+   ровно в <dialog> (см. handleClick в Modal.jsx) — это и есть клик
+   по затемнению. */
+.modal {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  /* У браузера у dialog по умолчанию overflow: auto — угловые скобки
+     .corner, вынесенные на -6px за край, обрезались бы. Скроллится
+     не сам dialog, а .modal-body внутри. */
+  overflow: visible;
+}
+
+/* ::backdrop во многих браузерах не наследует CSS-переменные от :root
+   (он вне дерева документа) — поэтому цвет здесь литералом, а не
+   var(--color-accent-900). Это тот же #1d2d3d, просто с прозрачностью. */
+.modal::backdrop {
+  background: rgba(29, 45, 61, 0.42);
+  backdrop-filter: blur(3px);
+  animation: fade-in 200ms ease;
+}
+
+.modal[open] .modal-panel {
+  animation: modal-in var(--duration-slow) var(--ease-standard);
+}
+
+.modal-panel {
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.modal-title {
+  margin: 6px 0 0;
+  font-size: 28px;
+}
+
+.modal-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.modal-close {
+  margin-left: auto;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--duration-base) var(--ease-standard),
+              border-color var(--duration-base) var(--ease-standard),
+              background var(--duration-base) var(--ease-standard);
+}
+
+.modal-close:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
+}
+
+.modal-body {
+  flex: 1;
+  min-height: 0; /* без этого flex-ребёнок не сжимается и не скроллится */
+  overflow-y: auto;
+  padding: 22px 24px 0;
+}
+
+/* Подвал с кнопками прилипает к низу окна при прокрутке длинной
+   формы — "Создать" всегда под рукой, не надо листать до конца. */
+.modal-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 24px -24px 0;
+  padding: 14px 24px 18px;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-divider);
+}
+
+.modal-footer-note {
+  margin-right: auto;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 560px) {
+  .modal-head { padding: 18px 18px 14px; }
+  .modal-title { font-size: 24px; }
+  .modal-body { padding: 18px 18px 0; }
+  .modal-footer { margin-inline: -18px; padding-inline: 18px; }
+  .modal-footer .btn { flex: 1; }
+  .modal-footer-note { display: none; }
+}

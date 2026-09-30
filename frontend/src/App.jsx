@@ -134,14 +134,19 @@ function App() {
         </nav>
 
         <main className="content">
-          {screen === "dash" && <Dashboard onNavigate={setScreen} />}
-          {screen === "products" && <Products />}
-          {screen === "receiving" && <Documents typeId={1} kicker="ОПЕРАЦИИ" title="Приёмка товара" createLabel="Создать приёмку" />}
-          {screen === "shipping" && <Documents typeId={2} kicker="ОПЕРАЦИИ" title="Отгрузка и заказы" createLabel="Создать отгрузку" />}
-          {screen === "count" && <Documents typeId={4} kicker="ОПЕРАЦИИ" title="Инвентаризация" createLabel="Начать пересчёт" />}
-          {screen === "suppliers" && <Counterparties />}
-          {screen === "warehouses" && <Warehouses />}
-          {screen === "users" && <Users role={currentUser.role} />}
+          {/* key={screen} — при смене раздела React видит "другой" элемент
+              и монтирует обёртку заново, поэтому анимация .page-enter
+              проигрывается на каждом переходе, а не один раз. */}
+          <div key={screen} className="page-enter">
+            {screen === "dash" && <Dashboard onNavigate={setScreen} />}
+            {screen === "products" && <Products />}
+            {screen === "receiving" && <Documents typeId={1} kicker="ОПЕРАЦИИ" title="Приёмка товара" createLabel="Создать приёмку" />}
+            {screen === "shipping" && <Documents typeId={2} kicker="ОПЕРАЦИИ" title="Отгрузка и заказы" createLabel="Создать отгрузку" />}
+            {screen === "count" && <Documents typeId={4} kicker="ОПЕРАЦИИ" title="Инвентаризация" createLabel="Начать пересчёт" />}
+            {screen === "suppliers" && <Counterparties />}
+            {screen === "warehouses" && <Warehouses />}
+            {screen === "users" && <Users role={currentUser.role} />}
+          </div>
         </main>
       </div>
     </div>

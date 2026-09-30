@@ -16,6 +16,15 @@
      65% — с запасом выше 62%, минимума, при котором AA проходит. */
   --color-text-muted: color-mix(in srgb, var(--color-text) 65%, transparent);
 
+  /* Тона состояний — взяты из мокапа (BAD/WARN в его скрипте), а не
+     придуманы: приглушённые "ржавые" оттенки, которые не спорят с
+     синим акцентом. Оба проходят AA как текст на --color-bg
+     (danger ~6.8:1, warn ~5.2:1). */
+  --color-danger: #8a3b3b;
+  --color-danger-100: #f6eaea;
+  --color-warn: #8a5a2b;
+  --color-warn-100: #f6efe6;
+
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
   --color-neutral-100: #f5f5f8;
@@ -76,6 +85,11 @@
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 360ms;
+
+  /* Кольцо фокуса у полей ввода — мягкое свечение поверх рамки,
+     сама рамка при этом темнеет до accent-700 (5.78:1) — именно она
+     и есть различимый индикатор фокуса, свечение — только подсказка. */
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
 }
 
 /* Respected globally, once, here — not per-component. Anyone with
@@ -85,7 +99,12 @@
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    /* Без обнуления задержек "веерные" появления (KPI, схема на логине)
+       всё равно ждали бы свои 60-1400ms и потом резко выскакивали —
+       для человека, отключившего анимации, это хуже плавного появления. */
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -93,6 +112,51 @@
 @keyframes rise-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Модалка: не просто проявляется, а чуть "подъезжает" и доувеличивается —
+   читается как лист, который кладут на стол поверх страницы. */
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Короткое "нет" головой — на неверный пароль. Амплитуда маленькая,
+   иначе выглядит как баг вёрстки, а не как реакция. */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Подсветка только что созданной строки таблицы: вспыхивает акцентом
+   и гаснет — видно, куда именно легла новая запись. */
+@keyframes row-flash {
+  from { background: var(--color-accent-200); }
+  to { background: transparent; }
+}
+
+/* "Прорисовка" линий схемы — работает в паре с pathLength="1" на SVG:
+   длина любой линии нормализуется к 1, и dashoffset 1→0 её "чертит". */
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Скелетон загрузки — блик, пробегающий по серой плашке. */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
 
 body {
@@ -209,6 +273,27 @@ figcaption {
 .btn-icon { width: 36px; height: 36px; padding: 0; }
 .btn-block { width: 100%; margin-top: var(--space-2); }
 
+/* Крупная кнопка — для главного действия формы (Войти, Создать позицию):
+   выше обычной, чтобы в неё было легко попасть и на ноутбуке, и пальцем. */
+.btn-lg { min-height: 44px; padding-inline: 20px; font-size: 15px; letter-spacing: 0.02em; }
+
+/* Удаление: в покое — обычная тихая кнопка (не кричит красным в каждой
+   строке таблицы), краснеет только под курсором или когда уже ждёт
+   подтверждения (.btn-danger). */
+.btn-ghost-danger { color: var(--color-text-muted); border-color: transparent; }
+.btn-ghost-danger:hover { color: var(--color-danger); background: var(--color-danger-100); }
+.btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-bg); }
+.btn-danger:hover { background: #6f2e2e; border-color: #6f2e2e; }
+
+/* Спиннер внутри кнопки на время запроса. currentColor — сам берёт цвет
+   текста кнопки, одинаково работает и на тёмной primary, и на светлой. */
+.btn-spinner {
+  width: 13px; height: 13px; flex: none;
+  border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
 /* — forms — */
 .field > label {
   display: block; font-size: 12px; margin-bottom: 5px;
@@ -219,11 +304,52 @@ figcaption {
   font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
   background: var(--color-surface);
   border: 1px solid var(--color-divider); border-radius: var(--radius-md);
-  transition: border-color var(--duration-base) var(--ease-standard);
+  transition: border-color var(--duration-base) var(--ease-standard),
+              box-shadow var(--duration-base) var(--ease-standard),
+              background-color var(--duration-base) var(--ease-standard);
 }
+.input::placeholder { color: var(--color-text-muted); opacity: 1; }
 .input:hover { border-color: var(--color-text-muted); }
-.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+/* Вместо жёсткого 2px outline из глобального :focus-visible — рамка
+   темнеет до accent-700 (она и есть видимый индикатор, 5.78:1) и
+   появляется мягкое свечение вокруг. Поле в фокусе ещё и светлеет —
+   "активный лист" выделяется из серой массы формы. */
+.input:focus-visible {
+  outline: none;
+  border-color: var(--color-accent-700);
+  box-shadow: var(--focus-ring);
+  background-color: var(--color-bg);
+}
+/* :user-invalid, а не :invalid — подсвечивает ошибку только после того,
+   как человек реально потрогал поле, а не встречает пустую форму
+   сразу красными рамками на всех required-полях. */
+.input:user-invalid { border-color: var(--color-danger); }
+.input:user-invalid:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 20%, transparent); }
 textarea.input { min-height: 90px; resize: vertical; }
+
+/* Нативная стрелка select'а у каждого браузера своя и выбивается из
+   чертёжной эстетики — заменяем на тонкий шеврон той же толщины линий,
+   что и угловые скобки .corner. */
+select.input {
+  appearance: none;
+  padding-right: 32px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235d5d60' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  background-size: 10px 6px;
+}
+
+/* Стрелки-крутилки у number-полей — мелкие, неудобные и визуально
+   шумные; числа всё равно вводят с клавиатуры. */
+.input[type="number"] { appearance: textfield; -moz-appearance: textfield; }
+.input[type="number"]::-webkit-inner-spin-button,
+.input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Нативные чекбоксы по умолчанию ярко-синие системного оттенка — не
+   нашего. accent-color перекрашивает их одной строкой, без самописных
+   чекбоксов. */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent-700); }
 .radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
 .radio input, .seg-opt input {
   position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
@@ -282,6 +408,13 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* Граница остаётся на --color-accent (UI-элементы нужен только 3:1,
    он проходит) — текст внутри тега на accent-700, тексту нужен 4.5:1. */
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent-700); }
+.tag-warn { border: 1px solid color-mix(in srgb, var(--color-warn) 55%, transparent); background: var(--color-warn-100); color: var(--color-warn); }
+.tag-danger { border: 1px solid color-mix(in srgb, var(--color-danger) 55%, transparent); background: var(--color-danger-100); color: var(--color-danger); }
+/* Точка-индикатор перед текстом тега — считывается быстрее цвета фона. */
+.tag-dot::before {
+  content: ""; width: 6px; height: 6px; margin-right: 6px; flex: none;
+  background: currentColor;
+}
 
 /* — navigation — */
 .nav {
@@ -333,6 +466,10 @@ textarea.input { min-height: 90px; resize: vertical; }
 .card, .btn, .input, .tag, .seg, .dialog { border-radius: 0; }
 .card, .dialog { background: transparent; border: 1px solid var(--color-divider); }
 .btn { border: 1px solid var(--color-divider); }
-.btn-primary { border-color: var(--color-accent); }
-.btn-ghost { border-color: transparent; }
+/* Прозрачная рамка у залитых кнопок: фон и так рисуется под рамкой
+   (background-clip: border-box по умолчанию), а светлый контур вокруг
+   тёмной заливки читался как ореол. */
+.btn-primary { border-color: transparent; }
+.btn-ghost, .btn-ghost-danger { border-color: transparent; }
+.btn-danger { border-color: var(--color-danger); }
 
