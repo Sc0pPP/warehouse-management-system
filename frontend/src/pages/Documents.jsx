@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { authHeaders } from "../auth.js";
-import { API_BASE, networkMessage, readError } from "../api.js";
+import { API_BASE, downloadFile, networkMessage, readError } from "../api.js";
 import { Modal } from "../components/Modal.jsx";
 import { Callout, Corners, EmptyRow, FilterChips, FormFooter, PageHeader, PlusIcon, SkeletonRows } from "../components/ui.jsx";
 import { useTwoStepConfirm } from "../hooks/useTwoStepConfirm.js";
@@ -67,6 +67,8 @@ export function Documents({ typeId, kicker, title, createLabel }) {
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [lastCreatedId, setLastCreatedId] = useState(null);
+  // id документа, файл которого сейчас формируется (кнопка "XLSX" блокируется)
+  const [exportingId, setExportingId] = useState(null);
 
   const postConfirm = useTwoStepConfirm();
   const [postingId, setPostingId] = useState(null);
@@ -249,6 +251,21 @@ export function Documents({ typeId, kicker, title, createLabel }) {
     }
   }
 
+  // Скачивание документа в Excel. Файл строит бэкенд (GET /documents/{id}/export),
+  // а как его доставить на диск — решает downloadFile(): в браузере это обычное
+  // скачивание, в окне приложения — диалог сохранения через C#.
+  async function handleExport(d) {
+    setExportingId(d.id);
+    setError(null);
+    try {
+      await downloadFile(`/documents/${d.id}/export`, `${d.number}.xlsx`);
+    } catch (err) {
+      setError(networkMessage(err));
+    } finally {
+      setExportingId(null);
+    }
+  }
+
   const ofType = documents.filter((d) => d.typeId === typeId);
   const drafts = ofType.filter((d) => !d.isPosted);
   const counts = { all: ofType.length, draft: drafts.length, posted: ofType.length - drafts.length };
@@ -357,6 +374,15 @@ export function Documents({ typeId, kicker, title, createLabel }) {
                       {d.isPosted && <div className="cell-sub">{formatDateTime(d.postedAt)}</div>}
                     </td>
                     <td className="cell-actions">
+                      {/* Экспорт доступен и для черновиков, и для проведённых */}
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => handleExport(d)}
+                        disabled={exportingId === d.id}
+                        aria-label={`Скачать ${d.number} в Excel`}
+                      >
+                        {exportingId === d.id ? "Готовим…" : "XLSX"}
+                      </button>{" "}
                       {!d.isPosted && (
                         <button
                           className={`btn ${confirming ? "btn-primary" : "btn-secondary"}`}
