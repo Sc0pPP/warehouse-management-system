@@ -1,0 +1,5 @@
+# .bat обязан быть с CRLF: на LF-файлах cmd.exe путает метки (goto :label).
+*.bat text eol=crlf
+
+# SQL храним с LF; psql на Windows читает их без проблем.
+database/*.sql text eol=lf
