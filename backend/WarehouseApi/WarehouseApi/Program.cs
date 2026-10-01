@@ -136,7 +136,7 @@ app.MapPost("/api/products", (CreateProductRequest request, ClaimsPrincipal user
         Sku = request.Sku,
         Name = request.Name,
         CategoryId = request.CategoryId,
-        Unit = request.Unit,
+        UnitId = request.UnitId,
         Barcode = request.Barcode,
         MinStockLevel = request.MinStockLevel,
         Price = request.Price,
@@ -543,7 +543,6 @@ app.MapPost("/api/documents", (CreateDocumentRequest request,ClaimsPrincipal use
         CounterpartyId = request.CounterpartyId,
         UserId = userId,
         Comment = request.Comment,
-        Status = "Черновик",
         IsPosted = false
     };
 
@@ -621,4 +620,7 @@ app.MapPost("/api/documents/{id}/post", (int id, ClaimsPrincipal user, Warehouse
 }).RequireAuthorization();
 
 
+
+
 app.Run();
+ 

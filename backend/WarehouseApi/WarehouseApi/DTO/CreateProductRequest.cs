@@ -6,7 +6,7 @@ public record CreateProductRequest(
     string Sku,
     string Name,
     int CategoryId,
-    string Unit,
+    int UnitId,
     string? Barcode,
     decimal MinStockLevel,
     decimal Price,
