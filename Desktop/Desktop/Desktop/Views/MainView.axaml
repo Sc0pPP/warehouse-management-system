@@ -12,5 +12,5 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <WebView Url="http://localhost:5173" />
+    <WebView x:Name="Web" Url="http://localhost:5173" />
 </UserControl>

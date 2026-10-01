@@ -51,7 +51,6 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();  // сначала: кто ты?
 app.UseAuthorization();   // потом: что тебе разрешено?
 
-app.MapTestExport();      // ВРЕМЕННО (фаза 0): тест скачивания файла, только в Development
 
 app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
 {

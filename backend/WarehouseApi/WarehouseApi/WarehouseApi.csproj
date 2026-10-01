@@ -23,4 +23,8 @@
       <None Remove="WarehouseApi.http" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Endpoints\" />
+    </ItemGroup>
+
 </Project>
