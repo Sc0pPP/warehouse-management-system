@@ -30,13 +30,36 @@ function fileNameFromDisposition(disposition) {
   return plain ? plain[1] : null;
 }
 
+// Окно приложения (WebView.Avalonia) НЕ умеет сохранять скачанное: в нём нет
+// ни диалога сохранения, ни события загрузки — клик по <a download> просто
+// игнорируется. Зато библиотека подмешивает в каждую страницу мост
+// window.external.sendMessage(строка), который доставляет строку в C#
+// (событие WebView.WebMessageReceived). В обычном браузере такой функции нет —
+// по ней и отличаем, где мы запущены.
+function hasDesktopBridge() {
+  return typeof window.external?.sendMessage === "function";
+}
+
+// Blob -> строка base64 (через data-URL: "data:тип;base64,ДАННЫЕ" — берём ДАННЫЕ).
+// Через сообщение можно передать только строку, сырые байты мост не принимает.
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 // Скачивание файла с авторизацией. JWT лежит в заголовке Authorization, а
 // обычная ссылка <a href> заголовков не шлёт — поэтому файл запрашиваем
-// через fetch, превращаем ответ в blob (файл в памяти браузера), вешаем на
-// него временный адрес и "кликаем" по невидимой ссылке с атрибутом download.
+// через fetch и получаем blob (файл в памяти). Дальше два пути:
+//  - окно приложения: отдаём файл в C# через мост, он покажет диалог сохранения;
+//  - обычный браузер: вешаем на blob временный адрес и "кликаем" по ссылке
+//    с атрибутом download.
 //
 // Возвращает отчёт о том, что произошло (для экрана диагностики): сам факт
-// "браузер сохранил файл" из JS узнать нельзя, мы видим только свою часть.
+// "файл сохранён" из JS узнать нельзя, мы видим только свою часть.
 export async function downloadFile(path, fallbackName = "file") {
   const response = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
   if (!response.ok) {
@@ -46,6 +69,14 @@ export async function downloadFile(path, fallbackName = "file") {
   const disposition = response.headers.get("Content-Disposition");
   const fileName = fileNameFromDisposition(disposition) ?? fallbackName;
   const blob = await response.blob();
+  const report = { status: response.status, bytes: blob.size, contentType: blob.type, disposition, fileName };
+
+  if (hasDesktopBridge()) {
+    window.external.sendMessage(
+      JSON.stringify({ type: "saveFile", fileName, contentType: blob.type, base64: await blobToBase64(blob) }),
+    );
+    return { ...report, via: "desktop" };
+  }
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -58,5 +89,5 @@ export async function downloadFile(path, fallbackName = "file") {
   // если убрать сразу, часть браузеров не успевает начать сохранение.
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 
-  return { status: response.status, bytes: blob.size, contentType: blob.type, disposition, fileName };
+  return { ...report, via: "browser" };
 }

@@ -27,7 +27,11 @@ export function ExportSpike() {
       const r = await downloadFile(path);
       addLog(`✔ ${label}: ответ ${r.status}, ${r.bytes} байт, тип ${r.contentType || "—"}`);
       addLog(`   имя из заголовка: «${r.fileName}»${r.disposition ? "" : "  ⚠ заголовок Content-Disposition не виден"}`);
-      addLog("   клик по ссылке выполнен — проверь, появился ли файл (диалог сохранения или папка «Загрузки»)");
+      addLog(
+        r.via === "desktop"
+          ? "   файл отправлен в C# через мост — должен появиться диалог сохранения окна приложения"
+          : "   клик по ссылке выполнен — проверь, появился ли файл (диалог сохранения или папка «Загрузки»)",
+      );
     } catch (err) {
       addLog(`✘ ${label}: ${networkMessage(err)}`);
     } finally {
