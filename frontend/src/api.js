@@ -48,11 +48,6 @@ function desktopSend() {
   return null;
 }
 
-// Для экрана диагностики: какие каналы в этой среде вообще есть.
-export function bridgeInfo() {
-  return `mac=${!!window.webkit?.messageHandlers?.webview} win=${!!window.chrome?.webview}`;
-}
-
 // Blob -> строка base64 (через data-URL: "data:тип;base64,ДАННЫЕ" — берём ДАННЫЕ).
 // Через сообщение можно передать только строку, сырые байты мост не принимает.
 function blobToBase64(blob) {

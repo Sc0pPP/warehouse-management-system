@@ -9,7 +9,6 @@ import { Counterparties } from "./pages/Counterparties.jsx";
 import { Users } from "./pages/Users.jsx";
 import { Documents } from "./pages/Documents.jsx";
 import { initials } from "./utils/format.js";
-import { ExportSpike } from "./components/ExportSpike.jsx";
 
 // Пункты меню зависят от роли — это прямое отражение того, что бэкенд
 // вообще разрешает делать каждой роли (Program.cs, RequireRole(...) на
@@ -95,8 +94,6 @@ function App() {
       <header className="app-header">
         <div className="app-header-brand">СКЛАД · WMS</div>
         <div className="app-header-user">
-          {/* ВРЕМЕННО (фаза 0): тест скачивания файла, только при npm run dev */}
-          {import.meta.env.DEV && <ExportSpike />}
           <div className="app-header-avatar">{initials(currentUser.fullName)}</div>
           <div>
             <div className="app-header-name">{currentUser.fullName}</div>
