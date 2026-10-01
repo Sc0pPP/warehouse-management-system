@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE, downloadFile, networkMessage } from "../api.js";
+import { API_BASE, bridgeInfo, downloadFile, networkMessage } from "../api.js";
 import { Modal } from "./Modal.jsx";
 
 // ВРЕМЕННАЯ диагностика фазы 0: проверяем, скачивается ли файл из приложения
@@ -84,7 +84,7 @@ export function ExportSpike() {
           <section>
             <div className="form-section-title">Журнал</div>
             <pre className="spike-log">
-              {`Движок: ${navigator.userAgent}\n`}
+              {`Движок: ${navigator.userAgent}\nКаналы в C#: ${bridgeInfo()}\n`}
               {log.length ? log.join("\n") : "Пока пусто — нажми одну из кнопок выше."}
             </pre>
           </section>

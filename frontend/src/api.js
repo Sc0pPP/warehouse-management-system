@@ -32,12 +32,25 @@ function fileNameFromDisposition(disposition) {
 
 // Окно приложения (WebView.Avalonia) НЕ умеет сохранять скачанное: в нём нет
 // ни диалога сохранения, ни события загрузки — клик по <a download> просто
-// игнорируется. Зато библиотека подмешивает в каждую страницу мост
-// window.external.sendMessage(строка), который доставляет строку в C#
-// (событие WebView.WebMessageReceived). В обычном браузере такой функции нет —
-// по ней и отличаем, где мы запущены.
-function hasDesktopBridge() {
-  return typeof window.external?.sendMessage === "function";
+// игнорируется. Зато у каждого встроенного движка есть родной канал
+// "страница -> приложение", который библиотека доводит до события C#
+// WebView.WebMessageReceived (в e.Message приходит отправленная строка):
+//  - macOS (WKWebView):      window.webkit.messageHandlers.webview.postMessage
+//  - Windows (WebView2):     window.chrome.webview.postMessage
+// Готовый мост window.external.sendMessage библиотека создаёт только в режиме
+// Blazor, у нас его нет — поэтому обращаемся к родным каналам напрямую.
+// В обычном браузере ни того ни другого нет — по этому и отличаем, где мы.
+function desktopSend() {
+  const mac = window.webkit?.messageHandlers?.webview;
+  if (mac) return (message) => mac.postMessage(message);
+  const win = window.chrome?.webview;
+  if (win) return (message) => win.postMessage(message);
+  return null;
+}
+
+// Для экрана диагностики: какие каналы в этой среде вообще есть.
+export function bridgeInfo() {
+  return `mac=${!!window.webkit?.messageHandlers?.webview} win=${!!window.chrome?.webview}`;
 }
 
 // Blob -> строка base64 (через data-URL: "data:тип;base64,ДАННЫЕ" — берём ДАННЫЕ).
@@ -54,7 +67,7 @@ function blobToBase64(blob) {
 // Скачивание файла с авторизацией. JWT лежит в заголовке Authorization, а
 // обычная ссылка <a href> заголовков не шлёт — поэтому файл запрашиваем
 // через fetch и получаем blob (файл в памяти). Дальше два пути:
-//  - окно приложения: отдаём файл в C# через мост, он покажет диалог сохранения;
+//  - окно приложения: отдаём файл в C# через родной канал движка, он покажет диалог сохранения;
 //  - обычный браузер: вешаем на blob временный адрес и "кликаем" по ссылке
 //    с атрибутом download.
 //
@@ -71,10 +84,9 @@ export async function downloadFile(path, fallbackName = "file") {
   const blob = await response.blob();
   const report = { status: response.status, bytes: blob.size, contentType: blob.type, disposition, fileName };
 
-  if (hasDesktopBridge()) {
-    window.external.sendMessage(
-      JSON.stringify({ type: "saveFile", fileName, contentType: blob.type, base64: await blobToBase64(blob) }),
-    );
+  const send = desktopSend();
+  if (send) {
+    send(JSON.stringify({ type: "saveFile", fileName, contentType: blob.type, base64: await blobToBase64(blob) }));
     return { ...report, via: "desktop" };
   }
 
