@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using WarehouseApi.Data;
 using WarehouseApi.DTO;
+using WarehouseApi.Endpoints;
 using WarehouseApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,7 +36,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              // Content-Disposition (имя скачиваемого файла) не входит в
+              // список заголовков, которые браузер показывает JS при запросе
+              // с другого адреса (фронт :5173, API :5034) — без этой строки
+              // фронт видит заголовок как null и не знает имя файла.
+              .WithExposedHeaders("Content-Disposition"));
 });
 
 builder.Services.AddAuthorization();
@@ -44,6 +50,8 @@ var app = builder.Build();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();  // сначала: кто ты?
 app.UseAuthorization();   // потом: что тебе разрешено?
+
+app.MapTestExport();      // ВРЕМЕННО (фаза 0): тест скачивания файла, только в Development
 
 app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
 {
