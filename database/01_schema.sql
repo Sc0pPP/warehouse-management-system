@@ -19,11 +19,17 @@
 -- document_items тоже несёт свой warehouse_id (продублированный из
 -- родительского документа) ровно за этим — чтобы у него тоже был
 -- составной FK и на documents, и на products.
+--
+-- Принцип "все данные отдаёт API": всё, что раньше было зашито во фронте
+-- (список единиц измерения, префиксы и режимы типов документов, счётчики
+-- номеров), живёт в БД — справочники units и document_types и таблица
+-- document_number_counters. Тексты статусов остатка ("Норма", "Ниже
+-- минимума") и права ролей в БД НЕ лежат: это правила, они в C#.
 
 BEGIN;
 
 -- =========================================================
--- Справочники (пользователи и контрагенты) — общие для всей системы
+-- Справочники — общие для всей системы, не принадлежат складу
 -- =========================================================
 
 CREATE TABLE roles (
@@ -36,9 +42,32 @@ CREATE TABLE counterparty_types (
     name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE document_types (
+-- Единицы измерения. code — короткая запись, которую показывают рядом
+-- с числом ("шт", "рул"), name — полное название (для экспорта и подсказок).
+CREATE TABLE units (
     id   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE
+);
+
+-- Типы документов вместе с тем, как они себя ведут. Раньше эти настройки
+-- были зашиты во фронте по числовым id и в C# по сравнению имени строкой
+-- (typeName == "Приход"); теперь это данные, а логика читает их из строки.
+CREATE TABLE document_types (
+    id                   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name                 TEXT NOT NULL UNIQUE,
+    prefix               TEXT NOT NULL UNIQUE,   -- префикс номера: "ПР", "ЗК", "ИН"
+    number_width         INTEGER NOT NULL CHECK (number_width BETWEEN 1 AND 12), -- сколько цифр в номере (с ведущими нулями)
+    counterparty_type_id INTEGER REFERENCES counterparty_types(id), -- какого типа контрагента можно указать; NULL — контрагент в документе не нужен
+    has_prices           BOOLEAN NOT NULL,       -- есть ли у позиций цена и сумма
+    -- Как проведение двигает остатки:
+    --   increase — приход: остаток += количество
+    --   decrease — расход: остаток -= количество (нельзя уйти ниже нуля)
+    --   adjust   — инвентаризация: количество — знаковая дельта (-12 недостача, +2 излишек)
+    -- Из этого одного поля выводятся и "количество со знаком", и "проверять
+    -- остаток" — отдельными флагами они дублировали бы друг друга.
+    stock_effect         TEXT NOT NULL CHECK (stock_effect IN ('increase', 'decrease', 'adjust')),
+    sort_order           INTEGER NOT NULL
 );
 
 -- =========================================================
@@ -49,7 +78,13 @@ CREATE TABLE document_types (
 CREATE TABLE warehouses (
     id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name    TEXT NOT NULL,
-    address TEXT
+    address TEXT,
+    -- Часовой пояс склада (IANA-идентификатор). По нему API определяет,
+    -- к какому календарному дню относится документ (график дашборда) и
+    -- в каком времени показывать даты. Валидность значения БД проверить
+    -- не может (список зон лежит в самом Postgres, в CHECK его не вставить),
+    -- поэтому её проверяет API через TimeZoneInfo при создании склада.
+    time_zone TEXT NOT NULL DEFAULT 'Europe/Moscow'
 );
 
 -- =========================================================
@@ -63,7 +98,15 @@ CREATE TABLE users (
     full_name     TEXT NOT NULL,
     role_id       INTEGER NOT NULL REFERENCES roles(id),
     warehouse_id  INTEGER REFERENCES warehouses(id),  -- NULL только для роли "Админ"
-    is_active     BOOLEAN NOT NULL DEFAULT TRUE
+    is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+    last_login_at TIMESTAMPTZ,                         -- NULL, пока человек ни разу не входил
+    -- Когда пароль менялся в последний раз. JWT без состояния, поэтому
+    -- токен, выпущенный раньше этого момента, API считает недействительным —
+    -- так смена пароля "выкидывает" все старые сессии.
+    password_changed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- true у учётки, которую завёл директор/админ с временным паролем:
+    -- при входе API требует сменить пароль, пока флаг не сброшен.
+    must_change_password BOOLEAN NOT NULL DEFAULT FALSE
     -- Без UNIQUE(warehouse_id, id) и без составного FK из documents.user_id
     -- намеренно: EF Core не разрешает nullable-столбцу участвовать в
     -- составном ключе/индексе, используемом как цель FK (жёсткое правило
@@ -101,7 +144,7 @@ CREATE TABLE products (
     sku              TEXT NOT NULL,
     name             TEXT NOT NULL,
     category_id      INTEGER NOT NULL,
-    unit             TEXT NOT NULL DEFAULT 'шт',
+    unit_id          INTEGER NOT NULL REFERENCES units(id),
     barcode          TEXT,
     min_stock_level  NUMERIC(14,3) NOT NULL DEFAULT 0 CHECK (min_stock_level >= 0),
     price            NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
@@ -129,28 +172,55 @@ CREATE TABLE stock (
 );
 
 -- =========================================================
--- Документы движения (приход / расход / перемещение / инвентаризация)
+-- Документы движения (приход / расход / инвентаризация)
 -- =========================================================
+-- Типа "Перемещение" больше нет: при полной изоляции каталогов склад-
+-- получатель не знает товара отправителя, перемещать между складами
+-- нечего. Вместе с ним ушла колонка target_warehouse_id.
+
+-- Счётчик номеров: по строке на пару (склад, тип документа). Номер
+-- выдаёт API, а не человек и не фронт. Выдача — один атомарный запрос
+-- (блокирует строку, два параллельных документа не получат один номер):
+--
+--   INSERT INTO document_number_counters (warehouse_id, type_id, last_number)
+--   VALUES (@warehouse, @type, 1)
+--   ON CONFLICT (warehouse_id, type_id)
+--   DO UPDATE SET last_number = document_number_counters.last_number + 1
+--   RETURNING last_number;
+--
+-- Номер = prefix + "-" + last_number с ведущими нулями до number_width
+-- (document_types). Выполнять в ТОЙ ЖЕ транзакции, что и вставка документа:
+-- если вставка упадёт, откатится и счётчик, дырок в нумерации не будет.
+CREATE TABLE document_number_counters (
+    warehouse_id INTEGER NOT NULL REFERENCES warehouses(id),
+    type_id      INTEGER NOT NULL REFERENCES document_types(id),
+    last_number  INTEGER NOT NULL DEFAULT 0 CHECK (last_number >= 0),
+    PRIMARY KEY (warehouse_id, type_id)
+);
 
 CREATE TABLE documents (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     type_id             INTEGER NOT NULL REFERENCES document_types(id),
-    number              TEXT NOT NULL UNIQUE,
+    -- Номер уникален в рамках склада, а не глобально: у каждого склада своя
+    -- нумерация, и два склада вправе иметь свой "ПР-000001".
+    number              TEXT NOT NULL,
     warehouse_id        INTEGER NOT NULL REFERENCES warehouses(id),
-    target_warehouse_id INTEGER REFERENCES warehouses(id),   -- заполняется только для типа "Перемещение"
-    counterparty_id     INTEGER, -- заполняется для "Приход"/"Расход"
+    -- Контрагент нужен не всем типам: document_types.counterparty_type_id
+    -- говорит, какого типа его можно указать (NULL — вообще нельзя).
+    -- Соответствие типа контрагента типу документа проверяет API: в БД это
+    -- межтабличное условие, для CHECK недоступное.
+    counterparty_id     INTEGER,
     user_id             INTEGER NOT NULL REFERENCES users(id),
-    -- status — свободный текст для UI/workflow (как в мокапе: "Разгрузка",
-    -- "Собран"...), к движению остатков отношения не имеет.
-    status              TEXT NOT NULL DEFAULT 'Черновик',
-    -- is_posted — а вот это как раз "провели документ или нет": пока
-    -- false, stock не тронут; переход в true необратим и происходит
-    -- только через отдельную операцию проведения на уровне API.
+    -- is_posted — "провели документ или нет": пока false, stock не тронут;
+    -- переход в true необратим и происходит только через отдельную операцию
+    -- проведения на уровне API. Свободный текстовый status из мокапа
+    -- ("Разгрузка", "Собран") убран: нигде не отображался и с остатками
+    -- никак не связан.
     is_posted           BOOLEAN NOT NULL DEFAULT FALSE,
     posted_at           TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     comment             TEXT,
-    CHECK (target_warehouse_id IS NULL OR target_warehouse_id <> warehouse_id),
+    UNIQUE (warehouse_id, number),
     UNIQUE (warehouse_id, id), -- цель составных FK из document_items
     -- NULL в counterparty_id составной FK не проверяет (стандартное поведение
     -- Postgres MATCH SIMPLE) — так и задумано, поле опциональное.
@@ -188,10 +258,14 @@ CREATE INDEX idx_counterparties_warehouse ON counterparties(warehouse_id);
 CREATE INDEX idx_categories_warehouse     ON categories(warehouse_id);
 CREATE INDEX idx_products_warehouse       ON products(warehouse_id);
 CREATE INDEX idx_products_category        ON products(category_id);
+CREATE INDEX idx_products_unit            ON products(unit_id);
 CREATE INDEX idx_stock_product            ON stock(product_id);
 CREATE INDEX idx_stock_warehouse          ON stock(warehouse_id);
 CREATE INDEX idx_documents_type           ON documents(type_id);
-CREATE INDEX idx_documents_warehouse      ON documents(warehouse_id);
+-- Составной (склад, дата) вместо одиночного по складу: он же обслуживает
+-- выборку "документы склада", и сразу покрывает фильтр журнала по периоду
+-- и график дашборда за 14 дней.
+CREATE INDEX idx_documents_warehouse_date ON documents(warehouse_id, created_at);
 CREATE INDEX idx_documents_counterparty   ON documents(counterparty_id);
 CREATE INDEX idx_documents_user           ON documents(user_id);
 CREATE INDEX idx_document_items_doc       ON document_items(document_id);

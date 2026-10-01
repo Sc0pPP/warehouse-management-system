@@ -14,13 +14,9 @@ public partial class Document
 
     public int WarehouseId { get; set; }
 
-    public int? TargetWarehouseId { get; set; }
-
     public int? CounterpartyId { get; set; }
 
     public int UserId { get; set; }
-
-    public string Status { get; set; } = null!;
 
     public bool IsPosted { get; set; }
 
@@ -38,9 +34,6 @@ public partial class Document
     // самого документа. Цикл сериализации не образуется: у DocumentItem
     // обратная ссылка Document как раз JsonIgnore (см. DocumentItem.cs).
     public virtual ICollection<DocumentItem> DocumentItems { get; set; } = new List<DocumentItem>();
-
-    [JsonIgnore]
-    public virtual Warehouse? TargetWarehouse { get; set; }
 
     [JsonIgnore]
     public virtual DocumentType Type { get; set; } = null!;

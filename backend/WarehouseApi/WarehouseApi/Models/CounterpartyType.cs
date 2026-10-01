@@ -12,4 +12,7 @@ public partial class CounterpartyType
 
     [JsonIgnore]
     public virtual ICollection<Counterparty> Counterparties { get; set; } = new List<Counterparty>();
+
+    [JsonIgnore]
+    public virtual ICollection<DocumentType> DocumentTypes { get; set; } = new List<DocumentType>();
 }

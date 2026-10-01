@@ -16,7 +16,7 @@ public partial class Product
 
     public int CategoryId { get; set; }
 
-    public string Unit { get; set; } = null!;
+    public int UnitId { get; set; }
 
     public string? Barcode { get; set; }
 
@@ -34,6 +34,9 @@ public partial class Product
 
     [JsonIgnore]
     public virtual ICollection<Stock> Stocks { get; set; } = new List<Stock>();
+
+    [JsonIgnore]
+    public virtual Unit Unit { get; set; } = null!;
 
     [JsonIgnore]
     public virtual Warehouse Warehouse { get; set; } = null!;

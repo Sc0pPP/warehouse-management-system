@@ -22,6 +22,8 @@ public partial class WarehouseDbContext : DbContext
 
     public virtual DbSet<DocumentItem> DocumentItems { get; set; }
 
+    public virtual DbSet<DocumentNumberCounter> DocumentNumberCounters { get; set; }
+
     public virtual DbSet<DocumentType> DocumentTypes { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
@@ -29,6 +31,8 @@ public partial class WarehouseDbContext : DbContext
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Stock> Stocks { get; set; }
+
+    public virtual DbSet<Unit> Units { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -111,9 +115,9 @@ public partial class WarehouseDbContext : DbContext
 
             entity.ToTable("documents");
 
-            entity.HasIndex(e => e.Number, "documents_number_key").IsUnique();
-
             entity.HasIndex(e => new { e.WarehouseId, e.Id }, "documents_warehouse_id_id_key").IsUnique();
+
+            entity.HasIndex(e => new { e.WarehouseId, e.Number }, "documents_warehouse_id_number_key").IsUnique();
 
             entity.HasIndex(e => e.CounterpartyId, "idx_documents_counterparty");
 
@@ -121,7 +125,7 @@ public partial class WarehouseDbContext : DbContext
 
             entity.HasIndex(e => e.UserId, "idx_documents_user");
 
-            entity.HasIndex(e => e.WarehouseId, "idx_documents_warehouse");
+            entity.HasIndex(e => new { e.WarehouseId, e.CreatedAt }, "idx_documents_warehouse_date");
 
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
@@ -134,17 +138,9 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.IsPosted).HasColumnName("is_posted");
             entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.PostedAt).HasColumnName("posted_at");
-            entity.Property(e => e.Status)
-                .HasDefaultValueSql("'Черновик'::text")
-                .HasColumnName("status");
-            entity.Property(e => e.TargetWarehouseId).HasColumnName("target_warehouse_id");
             entity.Property(e => e.TypeId).HasColumnName("type_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
-
-            entity.HasOne(d => d.TargetWarehouse).WithMany(p => p.DocumentTargetWarehouses)
-                .HasForeignKey(d => d.TargetWarehouseId)
-                .HasConstraintName("documents_target_warehouse_id_fkey");
 
             entity.HasOne(d => d.Type).WithMany(p => p.Documents)
                 .HasForeignKey(d => d.TypeId)
@@ -156,7 +152,7 @@ public partial class WarehouseDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("documents_user_id_fkey");
 
-            entity.HasOne(d => d.Warehouse).WithMany(p => p.DocumentWarehouses)
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.Documents)
                 .HasForeignKey(d => d.WarehouseId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("documents_warehouse_id_fkey");
@@ -209,6 +205,27 @@ public partial class WarehouseDbContext : DbContext
                 .HasConstraintName("document_items_warehouse_id_product_id_fkey");
         });
 
+        modelBuilder.Entity<DocumentNumberCounter>(entity =>
+        {
+            entity.HasKey(e => new { e.WarehouseId, e.TypeId }).HasName("document_number_counters_pkey");
+
+            entity.ToTable("document_number_counters");
+
+            entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
+            entity.Property(e => e.TypeId).HasColumnName("type_id");
+            entity.Property(e => e.LastNumber).HasColumnName("last_number");
+
+            entity.HasOne(d => d.Type).WithMany(p => p.DocumentNumberCounters)
+                .HasForeignKey(d => d.TypeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("document_number_counters_type_id_fkey");
+
+            entity.HasOne(d => d.Warehouse).WithMany(p => p.DocumentNumberCounters)
+                .HasForeignKey(d => d.WarehouseId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("document_number_counters_warehouse_id_fkey");
+        });
+
         modelBuilder.Entity<DocumentType>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("document_types_pkey");
@@ -217,10 +234,22 @@ public partial class WarehouseDbContext : DbContext
 
             entity.HasIndex(e => e.Name, "document_types_name_key").IsUnique();
 
+            entity.HasIndex(e => e.Prefix, "document_types_prefix_key").IsUnique();
+
             entity.Property(e => e.Id)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("id");
+            entity.Property(e => e.CounterpartyTypeId).HasColumnName("counterparty_type_id");
+            entity.Property(e => e.HasPrices).HasColumnName("has_prices");
             entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.NumberWidth).HasColumnName("number_width");
+            entity.Property(e => e.Prefix).HasColumnName("prefix");
+            entity.Property(e => e.SortOrder).HasColumnName("sort_order");
+            entity.Property(e => e.StockEffect).HasColumnName("stock_effect");
+
+            entity.HasOne(d => d.CounterpartyType).WithMany(p => p.DocumentTypes)
+                .HasForeignKey(d => d.CounterpartyTypeId)
+                .HasConstraintName("document_types_counterparty_type_id_fkey");
         });
 
         modelBuilder.Entity<Product>(entity =>
@@ -230,6 +259,8 @@ public partial class WarehouseDbContext : DbContext
             entity.ToTable("products");
 
             entity.HasIndex(e => e.CategoryId, "idx_products_category");
+
+            entity.HasIndex(e => e.UnitId, "idx_products_unit");
 
             entity.HasIndex(e => e.WarehouseId, "idx_products_warehouse");
 
@@ -253,10 +284,13 @@ public partial class WarehouseDbContext : DbContext
                 .HasPrecision(12, 2)
                 .HasColumnName("price");
             entity.Property(e => e.Sku).HasColumnName("sku");
-            entity.Property(e => e.Unit)
-                .HasDefaultValueSql("'шт'::text")
-                .HasColumnName("unit");
+            entity.Property(e => e.UnitId).HasColumnName("unit_id");
             entity.Property(e => e.WarehouseId).HasColumnName("warehouse_id");
+
+            entity.HasOne(d => d.Unit).WithMany(p => p.Products)
+                .HasForeignKey(d => d.UnitId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("products_unit_id_fkey");
 
             entity.HasOne(d => d.Warehouse).WithMany(p => p.Products)
                 .HasForeignKey(d => d.WarehouseId)
@@ -317,6 +351,23 @@ public partial class WarehouseDbContext : DbContext
                 .HasConstraintName("stock_warehouse_id_product_id_fkey");
         });
 
+        modelBuilder.Entity<Unit>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("units_pkey");
+
+            entity.ToTable("units");
+
+            entity.HasIndex(e => e.Code, "units_code_key").IsUnique();
+
+            entity.HasIndex(e => e.Name, "units_name_key").IsUnique();
+
+            entity.Property(e => e.Id)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("id");
+            entity.Property(e => e.Code).HasColumnName("code");
+            entity.Property(e => e.Name).HasColumnName("name");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("users_pkey");
@@ -334,6 +385,11 @@ public partial class WarehouseDbContext : DbContext
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(true)
                 .HasColumnName("is_active");
+            entity.Property(e => e.LastLoginAt).HasColumnName("last_login_at");
+            entity.Property(e => e.MustChangePassword).HasColumnName("must_change_password");
+            entity.Property(e => e.PasswordChangedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("password_changed_at");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.Username).HasColumnName("username");
@@ -360,6 +416,9 @@ public partial class WarehouseDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Address).HasColumnName("address");
             entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.TimeZone)
+                .HasDefaultValueSql("'Europe/Moscow'::text")
+                .HasColumnName("time_zone");
         });
 
         OnModelCreatingPartial(modelBuilder);

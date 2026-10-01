@@ -12,6 +12,8 @@ public partial class Warehouse
 
     public string? Address { get; set; }
 
+    public string TimeZone { get; set; } = null!;
+
     [JsonIgnore]
     public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
 
@@ -22,10 +24,10 @@ public partial class Warehouse
     public virtual ICollection<DocumentItem> DocumentItems { get; set; } = new List<DocumentItem>();
 
     [JsonIgnore]
-    public virtual ICollection<Document> DocumentTargetWarehouses { get; set; } = new List<Document>();
+    public virtual ICollection<DocumentNumberCounter> DocumentNumberCounters { get; set; } = new List<DocumentNumberCounter>();
 
     [JsonIgnore]
-    public virtual ICollection<Document> DocumentWarehouses { get; set; } = new List<Document>();
+    public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
 
     [JsonIgnore]
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
