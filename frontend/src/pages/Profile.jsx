@@ -24,19 +24,23 @@ export function Profile({ currentUser }) {
   const [saved, setSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const response = await fetch(`${API_BASE}/users/${currentUser.id}`, { headers: authHeaders() });
-        if (!response.ok) throw new Error(await readError(response, "Не удалось загрузить профиль"));
-        setProfile(await response.json());
-      } catch (err) {
-        setError(networkMessage(err));
-      } finally {
-        setLoading(false);
-      }
+  // Данные профиля. Вынесено в функцию, чтобы после смены пароля перечитать
+  // их же — иначе строка "Пароль изменён" осталась бы со старой датой.
+  async function loadProfile() {
+    try {
+      const response = await fetch(`${API_BASE}/users/${currentUser.id}`, { headers: authHeaders() });
+      if (!response.ok) throw new Error(await readError(response, "Не удалось загрузить профиль"));
+      setProfile(await response.json());
+    } catch (err) {
+      setError(networkMessage(err));
+    } finally {
+      setLoading(false);
     }
-    load();
+  }
+
+  useEffect(() => {
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser.id]);
 
   function handleChange(event) {
@@ -70,6 +74,7 @@ export function Profile({ currentUser }) {
       }
       setForm(EMPTY_PASSWORDS);
       setSaved(true);
+      await loadProfile();
     } catch (err) {
       setFormError(networkMessage(err));
     } finally {
