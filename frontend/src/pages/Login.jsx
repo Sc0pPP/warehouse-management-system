@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle.jsx";
 import { saveSession } from "../auth.js";
-import { API_BASE } from "../api.js";
+import { API_BASE, readError } from "../api.js";
 import "./Login.css";
 
 // Демо-учётки из database/02_seed.sql. Показываются ТОЛЬКО в dev-сборке
@@ -98,6 +98,40 @@ function RackSchematic() {
 // onLoginSuccess — функция из App.jsx. Вызываем её, когда сервер
 // подтвердил логин, и передаём данные пользователя — единственный способ
 // "сообщить наверх", что можно показывать само приложение.
+// Код капчи: буквы чуть "пляшут" (наклон и сдвиг каждой), поверх — диагональная
+// штриховка. Смещения считаются из кода символа, а не случайно в рендере:
+// иначе при каждой перерисовке (ввод в соседнем поле) буквы бы дёргались.
+// Сам код приходит с сервера (GET /auth/captcha) — здесь только его показ.
+function CaptchaCode({ text }) {
+  return (
+    <span className="captcha-code" role="img" aria-label={`Код проверки: ${text.split("").join(" ")}`}>
+      {text.split("").map((ch, i) => {
+        const n = ch.charCodeAt(0) + i * 7;
+        return (
+          <span
+            key={i}
+            aria-hidden="true"
+            style={{ transform: `translateY(${(n % 5) - 2}px) rotate(${(n % 17) - 8}deg)` }}
+          >
+            {ch}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M8 16H3v5" />
+    </svg>
+  );
+}
+
 export function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -112,6 +146,27 @@ export function Login({ onLoginSuccess }) {
   // программно поставить в него фокус после выбора демо-логина.
   const passwordRef = useRef(null);
 
+  // Капча: { id, text } с сервера и то, что ввёл пользователь. Код одноразовый —
+  // после любой попытки входа (даже неудачной) просим новый.
+  const [captcha, setCaptcha] = useState(null);
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+
+  async function loadCaptcha() {
+    setCaptchaAnswer("");
+    try {
+      const response = await fetch(`${API_BASE}/auth/captcha`);
+      if (!response.ok) throw new Error();
+      setCaptcha(await response.json());
+    } catch {
+      // Сервер недоступен — код не получить; вход покажет ту же ошибку сети.
+      setCaptcha(null);
+    }
+  }
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
@@ -120,11 +175,17 @@ export function Login({ onLoginSuccess }) {
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, captchaId: captcha?.id, captchaAnswer }),
       });
 
       if (!response.ok) {
-        throw new Error(response.status === 401 ? "Неверный логин или пароль" : `Ошибка сервера: ${response.status}`);
+        // 401 — неверный логин/пароль; 400 — сервер сам написал, что не так
+        // с капчей (устарела / неверный код): показываем его текст как есть.
+        throw new Error(
+          response.status === 401
+            ? "Неверный логин или пароль"
+            : await readError(response, `Ошибка сервера: ${response.status}`),
+        );
       }
 
       const data = await response.json();
@@ -135,6 +196,7 @@ export function Login({ onLoginSuccess }) {
       // вообще" (бэкенд не запущен). Переводим на человеческий.
       setError(err.message === "Failed to fetch" ? "Сервер недоступен — проверьте, что бэкенд запущен" : err.message);
       setShake(true);
+      loadCaptcha();
     } finally {
       setLoading(false);
     }
@@ -255,6 +317,33 @@ export function Login({ onLoginSuccess }) {
                   >
                     {showPassword ? "Скрыть" : "Показать"}
                   </button>
+                </div>
+              </div>
+
+              <div className="field">
+                <label htmlFor="login-captcha">Код проверки</label>
+                <div className="captcha">
+                  {captcha ? <CaptchaCode text={captcha.text} /> : <span className="captcha-code captcha-empty">—</span>}
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-icon"
+                    onClick={loadCaptcha}
+                    aria-label="Обновить код проверки"
+                    title="Обновить код"
+                  >
+                    <RefreshIcon />
+                  </button>
+                  <input
+                    id="login-captcha"
+                    className="input login-input captcha-input"
+                    value={captchaAnswer}
+                    onChange={(e) => setCaptchaAnswer(e.target.value)}
+                    placeholder="Введите код"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    required
+                  />
                 </div>
               </div>
 

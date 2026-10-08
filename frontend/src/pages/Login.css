@@ -567,3 +567,56 @@
   top: var(--space-6);
   right: var(--space-6);
 }
+
+/* Капча: код слева, кнопка "обновить" и поле ввода — в одну строку. */
+.captcha {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.captcha-input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.captcha-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 112px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-divider);
+  /* Диагональная штриховка поверх — лёгкий "шум", чтобы код не читался
+     простым распознаванием текста со снимка экрана. */
+  background:
+    repeating-linear-gradient(
+      -35deg,
+      transparent 0 5px,
+      color-mix(in srgb, var(--color-text) 10%, transparent) 5px 6px
+    ),
+    var(--color-surface);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-700);
+  user-select: none;
+}
+
+.captcha-code span {
+  display: inline-block;
+}
+
+.captcha-empty {
+  color: var(--color-text-muted);
+}
+
+/* Подсказка в поле — обычным регистром, без разрядки (она только для кода). */
+.captcha-input::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+}
