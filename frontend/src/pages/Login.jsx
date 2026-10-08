@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { ThemeToggle } from "../components/ThemeToggle.jsx";
 import { saveSession } from "../auth.js";
 import { API_BASE } from "../api.js";
 import "./Login.css";
@@ -16,7 +17,7 @@ const DEMO_USERS = [
 // "чертёжной" толщине, что и угловые скобки .corner.
 function BoxMark() {
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 2.5 21 7v10l-9 4.5L3 17V7z" />
       <path d="M3 7l9 4.5L21 7" />
       <path d="M12 11.5v10" />
@@ -199,6 +200,7 @@ export function Login({ onLoginSuccess }) {
 
       {/* ==== Правая часть: форма входа ==== */}
       <main className="login-main">
+        <ThemeToggle className="login-theme-toggle" />
         <div className="login-card-wrap">
           <div
             className={`login-card blueprint${shake ? " is-shaking" : ""}`}

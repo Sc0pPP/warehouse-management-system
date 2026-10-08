@@ -17,17 +17,17 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
-  padding: 34px 48px 30px;
-  color: #e9edf1;
-  background-color: var(--color-accent-900);
+  padding: 34px 48px var(--space-8);
+  color: var(--color-paper);
+  background-color: var(--color-ink);
   /* Миллиметровка: крупная клетка 96px + мелкая 24px, обе — тонкими
      линиями цвета accent-300 на очень низкой непрозрачности. Четыре
      градиента вместо картинки — ни одного лишнего файла. */
   background-image:
-    linear-gradient(rgba(181, 217, 253, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(181, 217, 253, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(181, 217, 253, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(181, 217, 253, 0.035) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--color-steel) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-steel) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--color-steel) 3.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-steel) 3.5%, transparent) 1px, transparent 1px);
   background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
   background-position: -1px -1px;
   overflow: hidden;
@@ -39,7 +39,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 70% at 35% 45%, transparent 0%, rgba(10, 18, 26, 0.45) 100%);
+  background: radial-gradient(ellipse 80% 70% at 35% 45%, transparent 0%, color-mix(in srgb, black 35%, transparent) 100%);
   pointer-events: none;
 }
 
@@ -51,7 +51,7 @@
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-4);
   animation: fade-in var(--duration-slow) var(--ease-standard) backwards;
 }
 
@@ -61,8 +61,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(181, 217, 253, 0.5);
-  color: var(--color-accent-300);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 50%, transparent);
+  color: var(--color-steel);
 }
 
 .login-brand-name {
@@ -70,13 +70,13 @@
   font-weight: var(--font-heading-weight);
   font-size: 17px;
   letter-spacing: 0.08em;
-  color: #f2f4f7;
+  color: var(--color-paper);
 }
 
 .login-brand-sub {
   font-size: 11.5px;
   letter-spacing: 0.04em;
-  color: rgba(233, 237, 241, 0.65);
+  color: color-mix(in srgb, var(--color-paper) 65%, transparent);
 }
 
 .login-hero {
@@ -93,25 +93,25 @@
   font-size: 11px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-accent-300);
+  color: var(--color-steel);
   animation: rise-in var(--duration-slow) var(--ease-standard) 0.05s backwards;
 }
 
 .login-headline {
-  margin: 14px 0 0;
+  margin: var(--space-4) 0 0;
   font-size: clamp(38px, 4.4vw, 58px);
   line-height: 1.02;
   letter-spacing: -0.02em;
-  color: #f2f4f7;
+  color: var(--color-paper);
   animation: rise-in 500ms var(--ease-standard) 0.1s backwards;
 }
 
 .login-lead {
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
   max-width: 440px;
   font-size: 16px;
   line-height: 1.55;
-  color: rgba(233, 237, 241, 0.72);
+  color: color-mix(in srgb, var(--color-paper) 72%, transparent);
   animation: rise-in 500ms var(--ease-standard) 0.2s backwards;
 }
 
@@ -121,8 +121,8 @@
   display: block;
   width: 100%;
   max-width: 420px;
-  margin: 30px 0 28px;
-  color: var(--color-accent-300);
+  margin: var(--space-8) 0 var(--space-8);
+  color: var(--color-steel);
   overflow: visible;
 }
 
@@ -167,19 +167,19 @@
 .login-features {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--space-6);
   animation: rise-in 500ms var(--ease-standard) 0.35s backwards;
 }
 
 .login-feature {
-  padding: 14px 16px 15px;
-  border-color: rgba(181, 217, 253, 0.22);
-  background: rgba(181, 217, 253, 0.04);
+  padding: var(--space-4) var(--space-4) var(--space-4);
+  border-color: color-mix(in srgb, var(--color-steel) 22%, transparent);
+  background: color-mix(in srgb, var(--color-steel) 4%, transparent);
 }
 
 /* Угловые скобки на тёмном фоне — светлые, иначе их не видно */
 .login-feature > .corner {
-  color: rgba(181, 217, 253, 0.6);
+  color: color-mix(in srgb, var(--color-steel) 60%, transparent);
 }
 
 .login-feature-title {
@@ -187,14 +187,14 @@
   font-weight: var(--font-heading-weight);
   font-size: 16px;
   letter-spacing: 0.02em;
-  color: #f2f4f7;
+  color: var(--color-paper);
 }
 
 .login-feature-text {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   font-size: 12.5px;
   line-height: 1.5;
-  color: rgba(233, 237, 241, 0.68);
+  color: color-mix(in srgb, var(--color-paper) 68%, transparent);
 }
 
 /* ---- Штамп ---- */
@@ -203,18 +203,18 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72px 72px;
   max-width: 460px;
-  border: 1px solid rgba(181, 217, 253, 0.3);
+  border: 1px solid color-mix(in srgb, var(--color-steel) 30%, transparent);
   animation: fade-in 600ms var(--ease-standard) 0.5s backwards;
 }
 
 .login-stamp-cell {
-  padding: 7px 10px 8px;
+  padding: var(--space-2) var(--space-3) var(--space-2);
   font-size: 12px;
-  color: rgba(233, 237, 241, 0.82);
+  color: color-mix(in srgb, var(--color-paper) 82%, transparent);
 }
 
 .login-stamp-cell + .login-stamp-cell {
-  border-left: 1px solid rgba(181, 217, 253, 0.3);
+  border-left: 1px solid color-mix(in srgb, var(--color-steel) 30%, transparent);
 }
 
 .login-stamp-cell span {
@@ -224,17 +224,18 @@
   font-size: 9.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(181, 217, 253, 0.7);
+  color: color-mix(in srgb, var(--color-steel) 70%, transparent);
 }
 
 /* ===========================================================
    Правая часть — форма */
 
 .login-main {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: 40px var(--space-8);
 }
 
 .login-card-wrap {
@@ -243,10 +244,10 @@
 }
 
 .login-card {
-  padding: 32px 32px 26px;
+  padding: 32px 32px var(--space-8);
   /* На пол-тона светлее фона страницы — карточка читается как лист,
      положенный сверху, без тяжёлой тени. */
-  background: color-mix(in srgb, #ffffff 55%, var(--color-bg));
+  background: var(--color-raised);
   box-shadow: var(--shadow-md);
 }
 
@@ -266,20 +267,20 @@
 }
 
 .login-title {
-  margin: 20px 0 0;
+  margin: var(--space-6) 0 0;
   font-size: 32px;
 }
 
 .login-subtitle {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   font-size: 13.5px;
   color: var(--color-text-muted);
 }
 
 .login-form {
   display: grid;
-  gap: 16px;
-  margin-top: 24px;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
 }
 
 .login-form .field > label {
@@ -295,14 +296,14 @@
 
 .login-submit {
   width: 100%;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 /* ---- Демо-доступ (только dev) ---- */
 
 .login-demo {
-  margin-top: 22px;
-  padding-top: 18px;
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
   border-top: 1px dashed var(--color-divider);
 }
 
@@ -318,8 +319,8 @@
 .login-demo-users {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .login-demo-user {
@@ -328,7 +329,7 @@
   align-items: flex-start;
   gap: 2px;
   min-height: 44px;
-  padding: 7px 9px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-divider);
   background: transparent;
   font: inherit;
@@ -362,7 +363,7 @@
 }
 
 .login-demo-pass {
-  margin-top: 10px;
+  margin-top: var(--space-3);
   font-size: 12px;
   color: var(--color-text-muted);
 }
@@ -375,8 +376,8 @@
 }
 
 .login-note {
-  margin: 18px 0 0;
-  padding-top: 16px;
+  margin: var(--space-6) 0 0;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--color-divider);
   font-size: 12.5px;
   line-height: 1.5;
@@ -384,7 +385,7 @@
 }
 
 .login-footnote {
-  margin: 18px 0 0;
+  margin: var(--space-6) 0 0;
   text-align: center;
   font-size: 11.5px;
   color: var(--color-text-muted);
@@ -399,27 +400,27 @@
 
 @media (min-width: 961px) and (max-height: 880px) {
   .login-aside {
-    gap: 18px;
-    padding: 24px 44px 22px;
+    gap: var(--space-6);
+    padding: var(--space-8) 44px var(--space-6);
   }
 
   .login-headline {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-size: clamp(36px, 3.6vw, 46px);
   }
 
   .login-lead {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-size: 15px;
   }
 
   .login-schematic {
     max-width: 330px;
-    margin: 18px 0 16px;
+    margin: var(--space-6) 0 var(--space-4);
   }
 
   .login-feature {
-    padding: 11px 14px 12px;
+    padding: var(--space-3) var(--space-4) var(--space-4);
   }
 
   .login-feature-text {
@@ -427,15 +428,15 @@
   }
 
   .login-stamp-cell {
-    padding: 5px 9px 6px;
+    padding: var(--space-1) var(--space-3) var(--space-2);
   }
 
   .login-main {
-    padding: 20px 24px;
+    padding: var(--space-6) var(--space-8);
   }
 
   .login-card {
-    padding: 24px 28px 20px;
+    padding: var(--space-8) var(--space-8) var(--space-6);
   }
 
   .login-card-mark {
@@ -444,13 +445,13 @@
   }
 
   .login-title {
-    margin-top: 14px;
+    margin-top: var(--space-4);
     font-size: 28px;
   }
 
   .login-form {
-    gap: 12px;
-    margin-top: 16px;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
   }
 
   .login-input {
@@ -458,25 +459,25 @@
   }
 
   .login-demo {
-    margin-top: 16px;
-    padding-top: 12px;
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
   }
 
   .login-note {
-    margin-top: 14px;
-    padding-top: 12px;
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
   }
 
   .login-footnote {
-    margin-top: 12px;
+    margin-top: var(--space-4);
   }
 }
 
 /* Совсем низкое окно — ещё на шаг плотнее, схема меньше. */
 @media (min-width: 961px) and (max-height: 760px) {
   .login-aside {
-    gap: 14px;
-    padding-block: 18px 16px;
+    gap: var(--space-4);
+    padding-block: var(--space-6) var(--space-4);
   }
 
   .login-headline {
@@ -489,11 +490,11 @@
 
   .login-schematic {
     max-width: 270px;
-    margin: 12px 0 12px;
+    margin: var(--space-4) 0 var(--space-4);
   }
 
   .login-card {
-    padding: 20px 26px 16px;
+    padding: var(--space-6) var(--space-8) var(--space-4);
   }
 
   .login-card-mark {
@@ -502,17 +503,17 @@
   }
 
   .login-title {
-    margin-top: 10px;
+    margin-top: var(--space-3);
     font-size: 26px;
   }
 
   .login-demo-user {
     min-height: 40px;
-    padding-block: 5px;
+    padding-block: var(--space-1);
   }
 
   .login-demo-pass {
-    margin-top: 7px;
+    margin-top: var(--space-2);
   }
 }
 
@@ -527,8 +528,8 @@
   }
 
   .login-aside {
-    gap: 20px;
-    padding: 22px 20px 26px;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-6) var(--space-8);
   }
 
   .login-schematic,
@@ -546,16 +547,23 @@
   }
 
   .login-main {
-    padding: 28px 16px 40px;
+    padding: var(--space-8) var(--space-4) 40px;
   }
 }
 
 @media (max-width: 420px) {
   .login-card {
-    padding: 24px 20px 20px;
+    padding: var(--space-8) var(--space-6) var(--space-6);
   }
 
   .login-demo-users {
     grid-template-columns: 1fr;
   }
+}
+
+/* Переключатель темы — в правом верхнем углу формы входа. */
+.login-theme-toggle {
+  position: absolute;
+  top: var(--space-6);
+  right: var(--space-6);
 }

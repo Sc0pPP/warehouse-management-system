@@ -17,9 +17,9 @@
 
 /* ::backdrop во многих браузерах не наследует CSS-переменные от :root
    (он вне дерева документа) — поэтому цвет здесь литералом, а не
-   var(--color-accent-900). Это тот же #1d2d3d, просто с прозрачностью. */
+   var(--color-accent-900). Это --color-ink (постоянный тёмный), просто с прозрачностью. */
 .modal::backdrop {
-  background: rgba(29, 45, 61, 0.42);
+  background: color-mix(in srgb, var(--color-ink) 42%, transparent);
   backdrop-filter: blur(3px);
   animation: fade-in 200ms ease;
 }
@@ -41,18 +41,18 @@
   flex: none;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 22px 24px 18px;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8) var(--space-6);
   border-bottom: 1px solid var(--color-divider);
 }
 
 .modal-title {
-  margin: 6px 0 0;
+  margin: var(--space-2) 0 0;
   font-size: 28px;
 }
 
 .modal-subtitle {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   font-size: 13px;
   color: var(--color-text-muted);
 }
@@ -86,7 +86,7 @@
   flex: 1;
   min-height: 0; /* без этого flex-ребёнок не сжимается и не скроллится */
   overflow-y: auto;
-  padding: 22px 24px 0;
+  padding: var(--space-6) var(--space-8) 0;
 }
 
 /* Подвал с кнопками прилипает к низу окна при прокрутке длинной
@@ -97,9 +97,9 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--space-3);
   margin: 24px -24px 0;
-  padding: 14px 24px 18px;
+  padding: var(--space-4) var(--space-8) var(--space-6);
   background: var(--color-bg);
   border-top: 1px solid var(--color-divider);
 }

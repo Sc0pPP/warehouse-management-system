@@ -7,8 +7,10 @@ import { Products } from "./pages/Products.jsx";
 import { Warehouses } from "./pages/Warehouses.jsx";
 import { Counterparties } from "./pages/Counterparties.jsx";
 import { Users } from "./pages/Users.jsx";
+import { Profile } from "./pages/Profile.jsx";
 import { Documents } from "./pages/Documents.jsx";
 import { initials } from "./utils/format.js";
+import { ThemeToggle } from "./components/ThemeToggle.jsx";
 
 // Пункты меню зависят от роли — это прямое отражение того, что бэкенд
 // вообще разрешает делать каждой роли (Program.cs, RequireRole(...) на
@@ -59,6 +61,11 @@ function getNavGroups(role) {
   return groups;
 }
 
+// "Профиль" есть у всех ролей, поэтому добавляется отдельно от меню роли.
+function withAccountGroup(groups) {
+  return [...groups, { title: "АККАУНТ", items: [{ id: "profile", label: "Профиль" }] }];
+}
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => getStoredUser());
   // Стартовый экран тоже зависит от роли — у Админа нет "Обзора склада",
@@ -84,7 +91,7 @@ function App() {
     setCurrentUser(null);
   }
 
-  const navGroups = getNavGroups(currentUser.role);
+  const navGroups = withAccountGroup(getNavGroups(currentUser.role));
 
   return (
     <div className="app-shell">
@@ -94,6 +101,7 @@ function App() {
       <header className="app-header">
         <div className="app-header-brand">СКЛАД · WMS</div>
         <div className="app-header-user">
+          <ThemeToggle />
           <div className="app-header-avatar">{initials(currentUser.fullName)}</div>
           <div>
             <div className="app-header-name">{currentUser.fullName}</div>
@@ -139,6 +147,7 @@ function App() {
             {screen === "suppliers" && <Counterparties />}
             {screen === "warehouses" && <Warehouses />}
             {screen === "users" && <Users role={currentUser.role} currentUserId={currentUser.id} />}
+            {screen === "profile" && <Profile currentUser={currentUser} />}
           </div>
         </main>
       </div>

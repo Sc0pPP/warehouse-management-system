@@ -84,7 +84,7 @@ export function Dashboard({ onNavigate }) {
   }, [loading]);
 
   if (loading) return <p className="text-muted">Загрузка...</p>;
-  if (error) return <p style={{ color: "var(--color-accent-700)" }}>Ошибка: {error}</p>;
+  if (error) return <p style={{ color: "var(--color-danger)" }}>Ошибка: {error}</p>;
 
   // Ищем id типов "Приход"/"Расход" по имени, а не хардкодим числа —
   // если порядок типов в справочнике когда-то поменяется, тут ничего

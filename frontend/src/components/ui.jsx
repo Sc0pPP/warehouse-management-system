@@ -18,7 +18,7 @@ export function Corners() {
 export function PlusIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-      <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }

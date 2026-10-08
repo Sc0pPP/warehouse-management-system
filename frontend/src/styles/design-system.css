@@ -90,6 +90,87 @@
      сама рамка при этом темнеет до accent-700 (5.78:1) — именно она
      и есть различимый индикатор фокуса, свечение — только подсказка. */
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 24%, transparent);
+
+  /* Приподнятая поверхность: карточка входа, лежащая "листом" поверх фона. */
+  --color-raised: color-mix(in srgb, #ffffff 55%, var(--color-bg));
+
+  /* Цвет наведения для опасной кнопки (на шаг темнее --color-danger). */
+  --color-danger-hover: #6f2e2e;
+
+  /* Постоянные цвета "чернил и бумаги": НЕ меняются при смене темы.
+     Нужны там, где поверхность тёмная всегда (панель на экране входа,
+     затемнение за модалкой) — обычные токены в тёмной теме перевернулись
+     бы и такая панель стала бы светлой. */
+  --color-ink: #1d2d3d;     /* = accent-900 светлой темы */
+  --color-paper: #f2f2f3;   /* = bg светлой темы */
+  --color-steel: #b5d9fd;   /* = accent-300 светлой темы */
+
+  color-scheme: light;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Тёмная тема — тот же набор токенов с другими значениями, больше ничего.
+   Включается атрибутом data-theme="dark" на <html> (см. src/theme.js).
+   Приёмы:
+   - фон/поверхность/текст меняются местами со светлой темой;
+   - тональные шкалы (100–900) переворачиваются: 100 — самый тёмный тон,
+     900 — самый светлый. Поэтому правила вроде "акцент-100 для заливки,
+     акцент-800 для текста на ней" работают без правок в обеих темах;
+   - акцент осветлён, чтобы пара акцент/фон держала ≥3:1, а текст
+     accent-700 на bg — ≥4.5:1 (проверено: ~7:1);
+   - тени становятся глубже: на тёмном фоне светлая тень не видна.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root[data-theme="dark"] {
+  --color-bg: #14181c;
+  --color-surface: #1b2127;
+  --color-text: #e6e9ec;
+  --color-accent: #7aa3cc;
+  --color-accent-2: #8aa8c4;
+  --color-divider: color-mix(in srgb, #e6e9ec 18%, transparent);
+
+  --color-danger: #e08a8a;
+  --color-danger-100: #3a2124;
+  --color-danger-hover: #f0a8a8;
+  --color-warn: #d9a064;
+  --color-warn-100: #392d1f;
+
+  --color-neutral-100: #26282b;
+  --color-neutral-200: #303236;
+  --color-neutral-300: #3b3d41;
+  --color-neutral-400: #505257;
+  --color-neutral-500: #6b6d72;
+  --color-neutral-600: #85878c;
+  --color-neutral-700: #a1a3a8;
+  --color-neutral-800: #c4c6c9;
+  --color-neutral-900: #e3e4e6;
+
+  --color-accent-100: #1b2a38;
+  --color-accent-200: #24384b;
+  --color-accent-300: #2f4963;
+  --color-accent-400: #3e6082;
+  --color-accent-500: #5b83ab;
+  --color-accent-600: #7ba1c7;
+  --color-accent-700: #9dbddd;
+  --color-accent-800: #bdd5ea;
+  --color-accent-900: #dbe9f6;
+
+  --color-accent-2-100: #1b2a38;
+  --color-accent-2-200: #24384b;
+  --color-accent-2-300: #314a62;
+  --color-accent-2-400: #46647f;
+  --color-accent-2-500: #5f819f;
+  --color-accent-2-600: #7e9db9;
+  --color-accent-2-700: #9db8d0;
+  --color-accent-2-800: #bdd0e1;
+  --color-accent-2-900: #dce7f1;
+
+  --color-raised: #1d242b;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #000000 50%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #000000 55%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #000000 65%, transparent);
+
+  color-scheme: dark;
 }
 
 /* Respected globally, once, here — not per-component. Anyone with
@@ -283,7 +364,7 @@ figcaption {
 .btn-ghost-danger { color: var(--color-text-muted); border-color: transparent; }
 .btn-ghost-danger:hover { color: var(--color-danger); background: var(--color-danger-100); }
 .btn-danger { background: var(--color-danger); border-color: var(--color-danger); color: var(--color-bg); }
-.btn-danger:hover { background: #6f2e2e; border-color: #6f2e2e; }
+.btn-danger:hover { background: var(--color-danger-hover); border-color: var(--color-danger-hover); }
 
 /* Спиннер внутри кнопки на время запроса. currentColor — сам берёт цвет
    текста кнопки, одинаково работает и на тёмной primary, и на светлой. */
@@ -450,7 +531,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent-7
 .dialog-backdrop {
   position: fixed; inset: 0; display: grid; place-items: center;
   padding: var(--space-4);
-  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 50%, transparent);
 }
 .dialog {
   width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);

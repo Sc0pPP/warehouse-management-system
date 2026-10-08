@@ -20,8 +20,8 @@
   height: 52px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 18px;
+  gap: var(--space-4);
+  padding: 0 var(--space-6);
   border-bottom: 1px solid var(--color-divider);
 }
 
@@ -36,7 +36,7 @@
   font-size: 12px;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);
-  padding-left: 14px;
+  padding-left: var(--space-4);
   border-left: 1px solid var(--color-divider);
 }
 
@@ -44,7 +44,7 @@
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--space-3);
 }
 
 .app-header-avatar {
@@ -79,20 +79,20 @@
 .sidebar {
   width: 220px;
   flex-shrink: 0; /* не даём сайдбару сжиматься, если контенту не хватает места */
-  padding: 16px 12px;
+  padding: var(--space-4) var(--space-4);
   border-right: 1px solid var(--color-divider);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   overflow-y: auto;
 }
 
 .sidebar-group {
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
 }
 
 .sidebar-group-title {
-  padding: 0 8px 8px;
+  padding: 0 var(--space-2) var(--space-2);
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 10px;
@@ -104,7 +104,7 @@
   display: block;
   width: 100%;
   text-align: left;
-  padding: 8px;
+  padding: var(--space-2);
   border: none;
   border-radius: var(--radius-md);
   background: transparent;
@@ -137,7 +137,7 @@
 
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--color-divider);
 }
 
@@ -145,7 +145,7 @@
   flex: 1;
   min-width: 0; /* чтобы широкие таблицы внутри не распирали layout */
   overflow-y: auto; /* именно тут появляется прокрутка — не на всей странице */
-  padding: 24px 28px;
+  padding: var(--space-8) var(--space-8);
 }
 
 /* ===========================================================
@@ -163,7 +163,7 @@
 .page-head-row {
   display: flex;
   align-items: flex-end;
-  gap: 18px;
+  gap: var(--space-6);
   margin-bottom: var(--space-6);
 }
 
@@ -179,13 +179,13 @@
 .page-subtitle {
   color: var(--color-text-muted);
   font-size: 13px;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .page-head-actions {
   margin-left: auto;
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex: none;
 }
 
@@ -207,7 +207,7 @@
 .checkbox-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   font-size: 14px;
 }
 
@@ -215,17 +215,17 @@
 .filter-chips {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
   min-height: 32px;
-  padding: 6px 12px;
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text);
@@ -270,11 +270,11 @@
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--space-6);
 }
 
 .kpi-card {
-  padding: 14px 16px 13px;
+  padding: var(--space-4) var(--space-4) var(--space-4);
   animation: rise-in var(--duration-slow) var(--ease-standard) backwards;
 }
 
@@ -299,27 +299,27 @@
   font-weight: var(--font-heading-weight);
   font-size: 30px;
   letter-spacing: -0.01em;
-  margin-top: 11px;
+  margin-top: var(--space-3);
 }
 
 .dash-row {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 20px;
-  margin-top: 20px;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
 }
 
 .chart-card h5 {
   margin: 0;
   display: flex;
   align-items: baseline;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .chart-legend {
   margin-left: auto;
   display: flex;
-  gap: 14px;
+  gap: var(--space-4);
   font-size: 11.5px;
   color: var(--color-text-muted);
 }
@@ -327,7 +327,7 @@
 .chart-legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .chart-swatch {
@@ -338,11 +338,11 @@
 .chart-bars {
   display: flex;
   align-items: flex-end;
-  gap: 9px;
+  gap: var(--space-3);
   height: 160px;
-  margin-top: 18px;
+  margin-top: var(--space-6);
   border-bottom: 1px solid var(--color-divider);
-  padding-bottom: 7px;
+  padding-bottom: var(--space-2);
 }
 
 .chart-bar-col {
@@ -352,14 +352,14 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-  gap: 7px;
+  gap: var(--space-2);
 }
 
 .chart-bar-pair {
   width: 100%;
   flex: 1;
   display: flex;
-  gap: 3px;
+  gap: var(--space-1);
   align-items: flex-end;
 }
 
@@ -387,8 +387,8 @@
 .alert-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 4px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-1);
   border-top: 1px solid var(--color-divider);
   transition: background var(--duration-base) var(--ease-standard);
   /* Сброс на случай, если .alert-row висит на <button> (кликабельные
@@ -455,7 +455,7 @@
 .form-sections {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--space-6);
 }
 
 /* Подпись секции — тот же язык, что у .kpi-label/.sidebar-group-title:
@@ -464,8 +464,8 @@
 .form-section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
   font-size: 10.5px;
@@ -484,7 +484,7 @@
 .form-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 16px;
+  gap: var(--space-4) var(--space-4);
 }
 
 .field-full {
@@ -527,7 +527,7 @@
 }
 
 .field-hint {
-  margin-top: 5px;
+  margin-top: var(--space-1);
   font-size: 11.5px;
   color: var(--color-text-muted);
 }
@@ -559,7 +559,7 @@
   top: 50%;
   right: 6px;
   transform: translateY(-50%);
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   border: 0;
   background: transparent;
   font: inherit;
@@ -581,7 +581,7 @@
 .switch-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-4);
   font-size: 14px;
   cursor: pointer;
   user-select: none;
@@ -629,8 +629,8 @@
 .callout {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-left: 3px solid currentColor;
   font-size: 13px;
   line-height: 1.45;
@@ -667,15 +667,15 @@
    Таблицы данных — рамка с угловыми скобками, как в мокапе */
 
 .data-frame {
-  padding: 0 4px;
+  padding: 0 var(--space-1);
 }
 
 .data-frame .table th {
-  padding: 12px 10px;
+  padding: var(--space-4) var(--space-3);
 }
 
 .data-frame .table td {
-  padding: 11px 10px;
+  padding: var(--space-3) var(--space-3);
   height: 46px;
 }
 
@@ -737,7 +737,7 @@
 .person {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
 .person-avatar {
@@ -791,13 +791,13 @@
 .item-row {
   display: grid;
   grid-template-columns: var(--items-cols);
-  gap: 10px;
+  gap: var(--space-3);
   align-items: start;
-  padding: 10px 12px;
+  padding: var(--space-3) var(--space-4);
 }
 
 .items-head {
-  padding-block: 9px;
+  padding-block: var(--space-3);
   border-bottom: 1px solid var(--color-divider);
   background: color-mix(in srgb, var(--color-text) 3%, transparent);
   font-size: 10.5px;
@@ -820,13 +820,13 @@
 }
 
 .item-sum {
-  padding-top: 9px;
+  padding-top: var(--space-3);
   font-size: 13.5px;
   font-variant-numeric: tabular-nums;
 }
 
 .item-hint {
-  margin-top: 5px;
+  margin-top: var(--space-1);
   font-size: 11.5px;
   color: var(--color-text-muted);
 }
@@ -864,8 +864,8 @@
 .items-foot {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-divider);
   background: color-mix(in srgb, var(--color-text) 3%, transparent);
 }
@@ -914,7 +914,7 @@
 
 /* Пустое состояние таблицы — вместо пустого <tbody> */
 .table-empty td {
-  padding: 48px 16px !important;
+  padding: 48px var(--space-4) !important;
   height: auto !important;
   text-align: center;
 }
@@ -926,7 +926,7 @@
 }
 
 .table-empty-text {
-  margin: 6px 0 16px;
+  margin: var(--space-2) 0 var(--space-4);
   font-size: 13px;
   color: var(--color-text-muted);
 }
@@ -944,4 +944,95 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
+}
+
+/* ===========================================================
+   Профиль: две карточки рядом — данные учётной записи и смена пароля */
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.profile-card {
+  padding: var(--space-6);
+  animation: rise-in var(--duration-slow) var(--ease-standard) backwards;
+}
+
+.profile-card + .profile-card {
+  animation-delay: 80ms;
+}
+
+.profile-person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.profile-name {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.profile-list {
+  margin: 0;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-divider);
+  font-size: 14px;
+}
+
+.profile-row:last-child {
+  border-bottom: 0;
+}
+
+.profile-row dt {
+  color: var(--color-text-muted);
+}
+
+.profile-row dd {
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+}
+
+.profile-card-title {
+  margin: 0 0 var(--space-4);
+  font-size: 22px;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Спокойное подтверждение — акцентом, а не новым "успешным" цветом:
+   словарь стилей не разрешает декоративных цветов сверх акцента. */
+.callout-accent {
+  color: var(--color-accent-700);
+  background: var(--color-accent-100);
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
