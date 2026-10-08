@@ -67,8 +67,9 @@ export function Documents({ typeId, kicker, title, createLabel }) {
   const [formError, setFormError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [lastCreatedId, setLastCreatedId] = useState(null);
-  // id документа, файл которого сейчас формируется (кнопка "XLSX" блокируется)
-  const [exportingId, setExportingId] = useState(null);
+  // Какой файл сейчас формируется, например "12:xlsx" (документ 12, формат xlsx) —
+  // эта кнопка блокируется на время запроса.
+  const [exporting, setExporting] = useState(null);
 
   const postConfirm = useTwoStepConfirm();
   const [postingId, setPostingId] = useState(null);
@@ -251,18 +252,20 @@ export function Documents({ typeId, kicker, title, createLabel }) {
     }
   }
 
-  // Скачивание документа в Excel. Файл строит бэкенд (GET /documents/{id}/export),
-  // а как его доставить на диск — решает downloadFile(): в браузере это обычное
-  // скачивание, в окне приложения — диалог сохранения через C#.
-  async function handleExport(d) {
-    setExportingId(d.id);
+  // Скачивание документа в файл. Файл строит бэкенд
+  // (GET /documents/{id}/export/{xlsx|docs}), а как его доставить на диск —
+  // решает downloadFile(): в браузере это обычное скачивание, в окне
+  // приложения — диалог сохранения через C#.
+  async function handleExport(d, format) {
+    setExporting(`${d.id}:${format}`);
     setError(null);
     try {
-      await downloadFile(`/documents/${d.id}/export`, `${d.number}.xlsx`);
+      const ext = format === "docs" ? "docx" : "xlsx";
+      await downloadFile(`/documents/${d.id}/export/${format}`, `${d.number}.${ext}`);
     } catch (err) {
       setError(networkMessage(err));
     } finally {
-      setExportingId(null);
+      setExporting(null);
     }
   }
 
@@ -375,14 +378,23 @@ export function Documents({ typeId, kicker, title, createLabel }) {
                     </td>
                     <td className="cell-actions">
                       {/* Экспорт доступен и для черновиков, и для проведённых */}
-                      <button
-                        className="btn btn-ghost"
-                        onClick={() => handleExport(d)}
-                        disabled={exportingId === d.id}
-                        aria-label={`Скачать ${d.number} в Excel`}
-                      >
-                        {exportingId === d.id ? "Готовим…" : "XLSX"}
-                      </button>{" "}
+                      {[
+                        ["xlsx", "XLSX", "Excel"],
+                        ["docs", "DOCX", "Word"],
+                      ].map(([format, label, app]) => {
+                        const busy = exporting === `${d.id}:${format}`;
+                        return (
+                          <button
+                            key={format}
+                            className="btn btn-ghost"
+                            onClick={() => handleExport(d, format)}
+                            disabled={exporting !== null}
+                            aria-label={`Скачать ${d.number} в ${app}`}
+                          >
+                            {busy ? "Готовим…" : label}
+                          </button>
+                        );
+                      })}{" "}
                       {!d.isPosted && (
                         <button
                           className={`btn ${confirming ? "btn-primary" : "btn-secondary"}`}
