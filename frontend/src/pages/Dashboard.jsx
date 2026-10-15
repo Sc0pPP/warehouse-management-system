@@ -92,10 +92,16 @@ export function Dashboard({ onNavigate }) {
   const incomingTypeId = documentTypes.find((t) => t.name === "Приход")?.id;
   const outgoingTypeId = documentTypes.find((t) => t.name === "Расход")?.id;
 
+  // На график попадают только ПРОВЕДЁННЫЕ документы и считаются они по дате
+  // проведения (postedAt), а не создания: черновик ещё ничего не изменил на
+  // складе, а документ, созданный месяц назад и проведённый сегодня, —
+  // сегодняшняя операция. Раньше считалась дата создания, и проведение
+  // на график вообще не влияло.
+  const posted = documents.filter((d) => d.isPosted && d.postedAt);
   const days = last14Days();
   const chart = days.map(({ key, label }) => {
-    const incoming = documents.filter((d) => d.typeId === incomingTypeId && d.createdAt.slice(0, 10) === key).length;
-    const outgoing = documents.filter((d) => d.typeId === outgoingTypeId && d.createdAt.slice(0, 10) === key).length;
+    const incoming = posted.filter((d) => d.typeId === incomingTypeId && d.postedAt.slice(0, 10) === key).length;
+    const outgoing = posted.filter((d) => d.typeId === outgoingTypeId && d.postedAt.slice(0, 10) === key).length;
     return { label, incoming, outgoing };
   });
   // Высоту столбиков считаем в процентах от максимума за все 14 дней —
