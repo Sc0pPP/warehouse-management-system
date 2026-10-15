@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -7,14 +8,17 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using WarehouseApi.Data;
 using WarehouseApi.DTO;
-using WarehouseApi.Endpoints;
 using WarehouseApi.Models;
+using WarehouseApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<WarehouseDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
+builder.Services.AddSingleton<ProductsExporter>();
+// Хранилище выданных капч (код живёт в памяти пару минут, см. /api/auth/captcha).
+builder.Services.AddMemoryCache();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -37,10 +41,6 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              // Content-Disposition (имя скачиваемого файла) не входит в
-              // список заголовков, которые браузер показывает JS при запросе
-              // с другого адреса (фронт :5173, API :5034) — без этой строки
-              // фронт видит заголовок как null и не знает имя файла.
               .WithExposedHeaders("Content-Disposition"));
 });
 
@@ -48,12 +48,34 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 app.UseCors("AllowFrontend");
-app.UseAuthentication();  // сначала: кто ты?
-app.UseAuthorization();   // потом: что тебе разрешено?
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 
-app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context) =>
+
+const string CaptchaAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const int CaptchaLength = 5;
+
+app.MapGet("/api/auth/captcha", (IMemoryCache cache) =>
 {
+    var text = new string(Enumerable.Range(0, CaptchaLength)
+        .Select(_ => CaptchaAlphabet[Random.Shared.Next(CaptchaAlphabet.Length)])
+        .ToArray());
+    var id = Guid.NewGuid().ToString("N");
+    cache.Set(id, text, TimeSpan.FromMinutes(2));
+    return Results.Ok(new { id, text });
+});
+
+app.MapPost("/api/auth/login", (LoginRequest request, WarehouseDbContext context, IMemoryCache cache) =>
+{
+    // Капча проверяется ПЕРВОЙ и одноразовая: запись удаляется при любой
+    // попытке, так что один код нельзя использовать для подбора пароля.
+    if (string.IsNullOrEmpty(request.CaptchaId) || !cache.TryGetValue(request.CaptchaId, out string? expected))
+        return Results.BadRequest("Проверка устарела — обновите код");
+    cache.Remove(request.CaptchaId);
+    if (!string.Equals(expected, request.CaptchaAnswer?.Trim(), StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest("Неверный код — попробуйте новый");
+
     var user = context.Users
         .Where(u => u.Username == request.Username)
         .Select(u => new
@@ -457,9 +479,15 @@ app.MapGet("/api/users/", (int? warehouseId ,ClaimsPrincipal user, WarehouseDbCo
     return Results.Ok(uss);
 }).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
 
-app.MapGet("/api/users/{id}", (int id,ClaimsPrincipal User, WarehouseDbContext context) =>
-{var us = context.Users.FirstOrDefault(u => u.Id == id);
+app.MapGet("/api/users/{id}", (int id, ClaimsPrincipal User, WarehouseDbContext context) =>
+{
+    var us = context.Users.FirstOrDefault(u => u.Id == id);
     if (us is null) return Results.NotFound();
+
+    var currentId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    if (!User.IsInRole("Админ") && !User.IsInRole("Директор") && currentId != us.Id)
+        return Results.Forbid();
 
     if (User.IsInRole("Директор"))
     {
@@ -470,7 +498,7 @@ app.MapGet("/api/users/{id}", (int id,ClaimsPrincipal User, WarehouseDbContext c
     }
 
     return Results.Ok(us);
-}).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+}).RequireAuthorization();
 
 app.MapPatch("/api/users/{id}", (int id,int? warehouseId,UpdateUserRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
 {
@@ -506,6 +534,29 @@ app.MapPatch("/api/users/{id}", (int id,int? warehouseId,UpdateUserRequest reque
     context.SaveChanges();
     return Results.Ok(us); 
 }).RequireAuthorization(policy => policy.RequireRole("Админ","Директор"));
+
+app.MapPost("/api/auth/change-password", (ChangePasswordRequest request, ClaimsPrincipal user, WarehouseDbContext context) =>
+{
+    var User=context.Users.FirstOrDefault(u=>u.Username==user.Identity.Name);
+    if (User == null) return Results.Forbid();
+    if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, User.PasswordHash))
+        return Results.BadRequest("Текущий пароль указан неверно");
+    var (whId, error) = ResolveWarehouseId(user, User.WarehouseId);
+    if(error is not null)
+    {
+        return Results.NotFound(error);
+    }
+
+    if (request.NewPassword is null||request.NewPassword.Length<6||request.NewPassword==request.CurrentPassword)
+    {
+        return Results.BadRequest("некоректный новый пароль");
+    }
+    User.PasswordHash=BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+    User.PasswordChangedAt = DateTime.UtcNow;
+    
+    context.SaveChanges();
+    return Results.Ok();
+}).RequireAuthorization();
 //Documents
 app.MapGet("/api/documents", (int? warehouseid,ClaimsPrincipal user, WarehouseDbContext context) =>
 {
@@ -626,8 +677,44 @@ app.MapPost("/api/documents/{id}/post", (int id, ClaimsPrincipal user, Warehouse
     
 }).RequireAuthorization();
 
+// EXPORT FILES
 
+app.MapGet("/api/documents/{id}/export/xlsx", async (int id, WarehouseDbContext db,ClaimsPrincipal user, ProductsExporter exporter) =>
+{
+    
+    var(whid,error)=ResolveWarehouseId(user, null);
+    if (error is not null)
+    {
+        return Results.NotFound("не ваш склад");
+    }
+    var document = await db.Documents
+        .Include(d => d.Type)
+        .Include(d => d.Warehouse)
+        .Include(d => d.Counterparty)       
+        .Include(d => d.DocumentItems)
+        .ThenInclude(i => i.Product)
+        .FirstOrDefaultAsync(d => d.Id == id && d.WarehouseId == whid);
+    if (document is null) return Results.NotFound();
+    return Results.File(exporter.ToXlsx(document), ProductsExporter.XlsxType , $"{document.Number}.xlsx");
+}).RequireAuthorization();
 
+app.MapGet("/api/documents/{id}/export/docs", async (int id, WarehouseDbContext db,ClaimsPrincipal user, ProductsExporter exporter) =>
+{
+    var(whid,error)=ResolveWarehouseId(user, null);
+    if (error is not null)
+    {
+        return Results.NotFound("не ваш склад");
+    }
+    var document = await db.Documents
+        .Include(d => d.Type)
+        .Include(d => d.Warehouse)
+        .Include(d => d.Counterparty)       
+        .Include(d => d.DocumentItems)
+        .ThenInclude(i => i.Product)
+        .FirstOrDefaultAsync(d => d.Id == id && d.WarehouseId == whid);
+    if (document is null) return Results.NotFound();
+    return Results.File(exporter.ToDocx(document), ProductsExporter.DocxType, $"{document.Number}.docx");
+}).RequireAuthorization();
 
 app.Run();
  
