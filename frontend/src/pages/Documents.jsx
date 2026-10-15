@@ -6,17 +6,20 @@ import { Callout, Corners, EmptyRow, FilterChips, FormFooter, PageHeader, PlusIc
 import { useTwoStepConfirm } from "../hooks/useTwoStepConfirm.js";
 import { plural, formatNumber, formatMoney, formatDate, formatDateTime } from "../utils/format.js";
 
-// Настройки трёх экранов, которые рисует этот компонент. typeId приходит
-// из App.jsx (1 — Приход, 2 — Расход, 4 — Инвентаризация, как в сиде).
+// Настройки трёх экранов, которые рисует этот компонент. Тип документа
+// приходит из App.jsx ПО ИМЕНИ ("Приход"), а числовой id берётся из справочника
+// /document-types: id — внутренность БД, и после пересборки базы он уже
+// менялся (у "Инвентаризации" был 4, стал 3) — экран переставал находить
+// свои документы, а создание падало.
 //  prefix — префикс номера документа (как в сиде: ПР-004412, ЗК-88104, ИН-0042);
 //  counterpartyType — имя типа контрагента из справочника, которого можно
 //    выбрать в этом документе (null — у инвентаризации контрагента нет);
 //  priced — есть ли у позиций цена и сумма;
 //  signed — количество это знаковая дельта (инвентаризация: −12 недостача, +2 излишек).
 const MODES = {
-  1: { prefix: "ПР", counterpartyType: "Поставщик", priced: true, signed: false },
-  2: { prefix: "ЗК", counterpartyType: "Покупатель", priced: true, signed: false, checkStock: true },
-  4: { prefix: "ИН", counterpartyType: null, priced: false, signed: true },
+  "Приход": { prefix: "ПР", counterpartyType: "Поставщик", priced: true, signed: false },
+  "Расход": { prefix: "ЗК", counterpartyType: "Покупатель", priced: true, signed: false, checkStock: true },
+  "Инвентаризация": { prefix: "ИН", counterpartyType: null, priced: false, signed: true },
 };
 
 const FILTERS = [
@@ -49,12 +52,13 @@ function suggestNumber(documents, prefix) {
   return `${prefix}-${String(max + 1).padStart(width, "0")}`;
 }
 
-export function Documents({ typeId, kicker, title, createLabel }) {
-  const mode = MODES[typeId];
+export function Documents({ typeName, kicker, title, createLabel }) {
+  const mode = MODES[typeName];
 
   const [documents, setDocuments] = useState([]);
   const [counterparties, setCounterparties] = useState([]);
   const [counterpartyTypes, setCounterpartyTypes] = useState([]);
+  const [documentTypes, setDocumentTypes] = useState([]);
   const [products, setProducts] = useState([]);
   const [stockByProduct, setStockByProduct] = useState({});
   const [loading, setLoading] = useState(true);
@@ -85,20 +89,22 @@ export function Documents({ typeId, kicker, title, createLabel }) {
     async function load() {
       try {
         const headers = authHeaders();
-        const [docsRes, cpRes, cpTypesRes, prodRes] = await Promise.all([
+        const [docsRes, cpRes, cpTypesRes, prodRes, docTypesRes] = await Promise.all([
           fetch(`${API_BASE}/documents`, { headers }),
           fetch(`${API_BASE}/counterparties`, { headers }),
           fetch(`${API_BASE}/counterparty-types`, { headers }),
           fetch(`${API_BASE}/products`, { headers }),
+          fetch(`${API_BASE}/document-types`, { headers }),
           loadStock(),
         ]);
-        if (!docsRes.ok || !cpRes.ok || !cpTypesRes.ok || !prodRes.ok) {
+        if (!docsRes.ok || !cpRes.ok || !cpTypesRes.ok || !prodRes.ok || !docTypesRes.ok) {
           throw new Error("Не удалось загрузить документы");
         }
         setDocuments(await docsRes.json());
         setCounterparties(await cpRes.json());
         setCounterpartyTypes(await cpTypesRes.json());
         setProducts(await prodRes.json());
+        setDocumentTypes(await docTypesRes.json());
       } catch (err) {
         setError(networkMessage(err));
       } finally {
@@ -106,9 +112,13 @@ export function Documents({ typeId, kicker, title, createLabel }) {
       }
     }
     load();
-    // typeId в зависимостях — при переходе с "Приёмки" на "Отгрузку"
+    // typeName в зависимостях — при переходе с "Приёмки" на "Отгрузку"
     // (другой пропс от App.jsx) всё загружается заново.
-  }, [typeId]);
+  }, [typeName]);
+
+  // id типа документа из справочника — по имени, а не зашитым числом.
+  // Пока справочник грузится, это undefined, и список просто пуст (идёт скелетон).
+  const typeId = documentTypes.find((t) => t.name === typeName)?.id;
 
   const productById = (id) => products.find((p) => p.id === Number(id));
   const counterpartyName = (id) => counterparties.find((c) => c.id === id)?.name ?? "—";
