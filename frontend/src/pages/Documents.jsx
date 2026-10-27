@@ -5,6 +5,7 @@ import { Modal } from "../components/Modal.jsx";
 import { Callout, Corners, EmptyRow, FilterChips, FormFooter, PageHeader, PlusIcon, SkeletonRows } from "../components/ui.jsx";
 import { useTwoStepConfirm } from "../hooks/useTwoStepConfirm.js";
 import { plural, formatNumber, formatMoney, formatDate, formatDateTime } from "../utils/format.js";
+import { unitCode } from "../utils/units.js";
 
 // Настройки трёх экранов, которые рисует этот компонент. Тип документа
 // приходит из App.jsx ПО ИМЕНИ ("Приход"), а числовой id берётся из справочника
@@ -513,10 +514,10 @@ export function Documents({ typeName, kicker, title, createLabel }) {
                       {product && (
                         <div className={`item-hint${overdraw ? " is-warn" : ""}`}>
                           {mode.signed
-                            ? `По учёту: ${formatNumber(onHand)} ${product.unit}${qty ? ` → станет ${formatNumber(onHand + qty)}` : ""}`
+                            ? `По учёту: ${formatNumber(onHand)} ${unitCode(product.unitId)}${qty ? ` → станет ${formatNumber(onHand + qty)}` : ""}`
                             : overdraw
-                              ? `Больше, чем на складе (${formatNumber(onHand)} ${product.unit}) — провести не получится`
-                              : `На складе: ${formatNumber(onHand)} ${product.unit}`}
+                              ? `Больше, чем на складе (${formatNumber(onHand)} ${unitCode(product.unitId)}) — провести не получится`
+                              : `На складе: ${formatNumber(onHand)} ${unitCode(product.unitId)}`}
                         </div>
                       )}
                     </div>
@@ -532,7 +533,7 @@ export function Documents({ typeName, kicker, title, createLabel }) {
                         placeholder={mode.signed ? "±0" : "0"}
                         aria-label={`${mode.signed ? "Расхождение" : "Количество"}, строка ${index + 1}`}
                       />
-                      <span className="input-affix-text">{product?.unit ?? ""}</span>
+                      <span className="input-affix-text">{unitCode(product?.unitId)}</span>
                     </div>
 
                     {mode.priced && (

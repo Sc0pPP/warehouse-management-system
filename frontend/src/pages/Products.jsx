@@ -6,14 +6,13 @@ import { Modal } from "../components/Modal.jsx";
 import { Callout, Corners, EmptyRow, FilterChips, FormFooter, PageHeader, PlusIcon, SkeletonRows } from "../components/ui.jsx";
 import { useTwoStepConfirm } from "../hooks/useTwoStepConfirm.js";
 import { plural, formatNumber, formatMoney } from "../utils/format.js";
-
-const UNITS = ["шт", "уп", "рул", "кг", "л", "м", "пал"];
+import { UNITS, unitCode } from "../utils/units.js";
 
 const EMPTY_FORM = {
   sku: "",
   name: "",
   categoryId: "",
-  unit: "шт",
+  unitId: 1,
   barcode: "",
   minStockLevel: "",
   price: "",
@@ -119,7 +118,7 @@ export function Products() {
           sku,
           name: form.name.trim(),
           categoryId: Number(form.categoryId),
-          unit: form.unit,
+          unitId: Number(form.unitId),
           barcode: form.barcode.trim() || null,
           minStockLevel: Number(form.minStockLevel || 0),
           price: Number(form.price || 0),
@@ -260,7 +259,7 @@ export function Products() {
                     <td style={{ fontWeight: 500 }}>{p.name}</td>
                     <td className="text-muted">{categoryName(p.categoryId)}</td>
                     <td className="cell-num">
-                      {formatNumber(qty)} <span className="text-muted">{p.unit}</span>
+                      {formatNumber(qty)} <span className="text-muted">{unitCode(p.unitId)}</span>
                     </td>
                     <td className="cell-num">{formatMoney(p.price)}</td>
                     <td>
@@ -327,9 +326,9 @@ export function Products() {
               </div>
               <div className="field field-required">
                 <label htmlFor="product-unit">Единица учёта</label>
-                <select id="product-unit" className="input" name="unit" value={form.unit} onChange={handleFormChange} required>
+                <select id="product-unit" className="input" name="unitId" value={form.unitId} onChange={handleFormChange} required>
                   {UNITS.map((u) => (
-                    <option key={u} value={u}>{u}</option>
+                    <option key={u.id} value={u.id}>{u.code}</option>
                   ))}
                 </select>
               </div>
@@ -343,7 +342,7 @@ export function Products() {
                 <label htmlFor="product-min">Минимальный остаток</label>
                 <div className="input-affix">
                   <input id="product-min" className="input" type="number" min="0" step="any" name="minStockLevel" value={form.minStockLevel} onChange={handleFormChange} placeholder="0" />
-                  <span className="input-affix-text">{form.unit}</span>
+                  <span className="input-affix-text">{unitCode(Number(form.unitId))}</span>
                 </div>
                 <div className="field-hint">Ниже этого — позиция попадёт в «Требует внимания».</div>
               </div>
